@@ -533,6 +533,10 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         setUseExternalCameraSource(useExternalCameraSource: screenCast)
         setExternalVideoCapture(externalVideoCapture: screenCast)
         
+        if screenCast {
+            sendVideoTrackStatusNotification(enabled: true)
+        }
+        
         self.webRTCClientMap[(self.publisherStreamId ?? (self.p2pStreamId)) ?? ""]?.switchToScreencast(screenCast)
     }
 
