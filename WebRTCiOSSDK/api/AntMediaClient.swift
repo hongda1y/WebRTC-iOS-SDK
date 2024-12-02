@@ -533,11 +533,8 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         setUseExternalCameraSource(useExternalCameraSource: screenCast)
         setExternalVideoCapture(externalVideoCapture: screenCast)
         
-        if screenCast {
-            sendVideoTrackStatusNotification(enabled: true)
-        }
-        
-        self.webRTCClientMap[(self.publisherStreamId ?? (self.p2pStreamId)) ?? ""]?.switchToScreencast(screenCast)
+        webRTCClientMap[(publisherStreamId ?? p2pStreamId) ?? ""]?.switchToScreencast(screenCast)
+        sendScreencastStatusNotification(enabled: screenCast)
     }
 
     /*
@@ -698,6 +695,13 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     
     func sendVideoTrackStatusNotification(enabled:Bool) {
         let eventType = enabled ? EVENT_TYPE_CAM_TURNED_ON : EVENT_TYPE_CAM_TURNED_OFF
+        let id = getPublisherStreamId()
+        
+        sendNotification(eventType: eventType, streamId: id)
+    }
+    
+    func sendScreencastStatusNotification(enabled:Bool) {
+        let eventType = enabled ? EVENT_TYPE_SCREENCAST_ON : EVENT_TYPE_SCREENCAST_OFF
         let id = getPublisherStreamId()
         
         sendNotification(eventType: eventType, streamId: id)

@@ -44,6 +44,9 @@ let ENABLE_TRACK_COMMAND = "enableTrack"
 let ENABLE_VIDEO_TRACK_COMMAND = "toggleVideo"
 let ENABLE_AUDIO_TRACK_COMMAND = "toggleAudio"
 
+let EVENT_TYPE_SCREENCAST_OFF = "SCREENCAST_OFF";
+let EVENT_TYPE_SCREENCAST_ON = "SCREENCAST_ON";
+
 public protocol AntMediaClientProtocol {
         
     /**
