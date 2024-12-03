@@ -64,7 +64,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
      */
     private var mainTrackId: String?
     private var playerStreamId: String?
-    private var p2pStreamId: String?
+    public var p2pStreamId: String?
     private var publishToken: String?
     private var playToken: String?
     private var webSocket: WebSocket?
