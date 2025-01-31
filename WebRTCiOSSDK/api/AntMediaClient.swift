@@ -645,7 +645,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         self.sendAudioTrackStatusNotification(enabled:enableTrack);
     }
     
-    func sendNotification(eventType:String, streamId: String = "") {
+    public func sendNotification(eventType:String, streamId: String = "") {
         let notification =  [
             EVENT_TYPE: eventType,
             STREAM_ID: self.getStreamId()].json;
