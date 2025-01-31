@@ -1291,7 +1291,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         
     }
     
-    func sendCommand(command: String, streamId: String) {
+    public func sendCommand(command: String, streamId: String) {
         let command =  [
             COMMAND: command,
             STREAM_ID: streamId
