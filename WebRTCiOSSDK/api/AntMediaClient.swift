@@ -1291,6 +1291,10 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         
     }
     
+    public func sendToWebsocket(param: [String: Any]) {
+        webSocket?.write(string: param.json)
+    }
+    
     public func sendCommand(command: String, streamId: String) {
         let command =  [
             COMMAND: command,
