@@ -1215,6 +1215,24 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         (self.webRTCClientMap[self.getPublisherStreamId()]?.getVideoCapturer() as? RTCCustomFrameCapturer)?.capture(pixelBuffer, rotation: rotation, timeStampNs: timestampNs);
     }
     
+    /// Pin `streamId` video to `track`
+    public func pinVideoTrack(to label: String, streamId: String, isPin: Bool) {
+        let command = [
+            "command": ASSIGN_VIDEO_TRACK,
+            "videoTrackId": label,
+            "streamId": streamId,
+            "enabled": isPin ? true : false
+        ] as [String : Any]
+        
+        webSocket?.write(string: command.json)
+    }
+    
+    /// Recall video track assignment
+    public func getVideoTrackAssignment(streamId: String) {
+        sendCommand(command: GET_VIDEO_TRACK_ASSIGNMENT,
+                    streamId: streamId)
+    }
+    
 
     public func enableVideoTrack(trackId:String, enabled:Bool){
         if (isWebSocketConnected) {
@@ -1291,10 +1309,6 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         
     }
     
-    public func sendToWebsocket(param: [String: Any]) {
-        webSocket?.write(string: param.json)
-    }
-    
     public func sendCommand(command: String, streamId: String) {
         let command =  [
             COMMAND: command,
@@ -1304,8 +1318,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         webSocket?.write(string: command)
     }
     
-    public func getBroadcastObject(forStreamId id: String)
-    {
+    public func getBroadcastObject(forStreamId id: String) {
         AntMediaClient.printf("GetBroadcastObject for \(id)")
 
         sendCommand(
