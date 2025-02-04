@@ -139,6 +139,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         var mode:String?
         var mainTrack:String?
         var trackList:[String]
+        var metaData: String?
     }
     
     public override init() {
@@ -206,15 +207,24 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         
         var trackList:[String] = [];
         AntMediaClient.printf("disable track id is \(String(describing: self.disableTrackId))");
+        
         if let trackId = self.disableTrackId {
             AntMediaClient.printf("appending track id to the tracklist \(String(describing: self.disableTrackId))");
             trackList.append("!" + trackId);
-        }
-        else {
+        } else {
             AntMediaClient.printf("Disable track id is not set \(String(describing: self.disableTrackId))");
         }
         
-        let handShakeMesage = HandshakeMessage(command: mode.getName(), streamId: streamId, token: token, video: self.videoEnable, audio:self.audioEnable, mainTrack: self.mainTrackId, trackList: trackList)
+        let metaData = "{\"isMicMuted\":\(!audioEnable),\"isCameraOff\":\(!videoEnable)}"
+        
+        let handShakeMesage = HandshakeMessage(command: mode.getName(),
+                                               streamId: streamId,
+                                               token: token,
+                                               video: videoEnable,
+                                               audio: audioEnable,
+                                               mainTrack: mainTrackId,
+                                               trackList: trackList,
+                                               metaData: metaData)
         
         let json = try! JSONEncoder().encode(handShakeMesage)
         return String(data: json, encoding: .utf8)!
