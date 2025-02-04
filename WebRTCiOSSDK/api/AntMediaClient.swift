@@ -964,17 +964,17 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                 //if this is called, it's publisher or initiator in p2p
                 let streamId = message[STREAM_ID] as! String
                 self.webRTCClientMap[streamId]?.createOffer()
-                break
+            
             case "stop":
                 let streamId = message[STREAM_ID] as! String
                 AntMediaClient.dispatchQueue.async {
                     self.webRTCClientMap.removeValue(forKey: streamId)?.disconnect()
                 }
-                break
+            
             case "takeConfiguration":
                 let streamId = message[STREAM_ID] as! String
                 self.onTakeConfiguration(message: message, streamId: streamId)
-                break
+            
             case "takeCandidate":
                 let streamId = message[STREAM_ID] as! String
                 self.onTakeCandidate(message: message, streamId: streamId)
@@ -1036,12 +1036,13 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                     self.joinedRoom(streamId: streamId, streams:streams);
                 }
                 else if definition == BROADCAST_OBJECT_NOTIFICATION { // broadcastObject
-                   let broadcastString = message["broadcast"] as! String
-                   let broadcastObject = broadcastString.toJSON()
-                   self.delegate?.onLoadBroadcastObject(
-                       streamId: message[STREAM_ID] as! String,
-                       message: broadcastObject ?? [:]
-                   )
+                    if let broadcastString = message["broadcast"] as? String {
+                        let broadcastObject = broadcastString.toJSON()
+                        delegate?.onLoadBroadcastObject(
+                            streamId: message[STREAM_ID] as! String,
+                            message: broadcastObject ?? [:]
+                        )
+                    }
                }
                 else if definition == RESOLUTION_CHANGE_INFO_COMMAND {
                     let streamId = message[STREAM_ID] as? String ?? "";
