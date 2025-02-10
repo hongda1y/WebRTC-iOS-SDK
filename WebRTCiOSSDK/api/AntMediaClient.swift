@@ -144,6 +144,14 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         var mainTrack:String?
         var trackList:[String]
         var metaData: String?
+        var streamName: String?
+    }
+    
+    struct VideoMetaData: Codable {
+        var isMicMuted: Bool?
+        var isCameraOff: Bool?
+        var username: String?
+        var profilePicture: String?
     }
     
     public override init() {
@@ -224,9 +232,13 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
             AntMediaClient.printf("Disable track id is not set \(String(describing: self.disableTrackId))");
         }
         
-        let metaData = """
-        {\"isMicMuted\":\(!audioEnable),\"isCameraOff\":\(!videoEnable),\"username\":\(username ?? streamId),\"profilePicture\":\(profilePicture ?? "")}
-        """
+        let metaData = VideoMetaData(isMicMuted: !audioEnable,
+                                     isCameraOff: !videoEnable,
+                                     username: username,
+                                     profilePicture: profilePicture)
+        
+        let metaDataJSON = try! JSONEncoder().encode(metaData)
+        let metaDataJSONString = String(data: metaDataJSON, encoding: .utf8)
         
         let handShakeMesage = HandshakeMessage(command: mode.getName(),
                                                streamId: streamId,
@@ -235,7 +247,8 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                                                audio: audioEnable,
                                                mainTrack: mainTrackId,
                                                trackList: trackList,
-                                               metaData: metaData)
+                                               metaData: metaDataJSONString!,
+                                               streamName: username ?? streamId)
         
         let json = try! JSONEncoder().encode(handShakeMesage)
         return String(data: json, encoding: .utf8)!

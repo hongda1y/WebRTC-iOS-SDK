@@ -48,6 +48,7 @@ open class ConferenceViewController: UIViewController ,  AVCaptureVideoDataOutpu
         self.conferenceClient?.delegate = self
         self.conferenceClient?.setWebSocketServerUrl(url: self.clientUrl)
         self.conferenceClient?.setLocalView(container: self.localView)
+        self.conferenceClient?.setUsernameInfo(username: "Socheat", profilePicture: "test profile")
         
         //this publishes stream to the room
         self.publisherStreamId = generateRandomAlphanumericString(length: 10);
