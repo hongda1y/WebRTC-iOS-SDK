@@ -120,6 +120,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     private var cameraSourceFPS: Int = 30;
     
     
+    private var userId: Int?
     private var username: String?
     private var profilePicture: String?
     
@@ -150,6 +151,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     struct VideoMetaData: Codable {
         var isMicMuted: Bool?
         var isCameraOff: Bool?
+        var userId: Int?
         var username: String?
         var profilePicture: String?
     }
@@ -157,7 +159,8 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     public override init() {
     }
     
-    public func setUsernameInfo(username: String, profilePicture: String) {
+    public func setUsernameInfo(userId: Int?, username: String, profilePicture: String) {
+        self.userId = userId
         self.username = username
         self.profilePicture = profilePicture
     }
@@ -234,6 +237,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         
         let metaData = VideoMetaData(isMicMuted: !audioEnable,
                                      isCameraOff: !videoEnable,
+                                     userId: userId,
                                      username: username,
                                      profilePicture: profilePicture)
         
