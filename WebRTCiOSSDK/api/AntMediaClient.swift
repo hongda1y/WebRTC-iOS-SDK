@@ -119,6 +119,10 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     
     private var cameraSourceFPS: Int = 30;
     
+    
+    private var username: String?
+    private var profilePicture: String?
+    
     /**
     Degradation preference when publishing streams. By default its values is maintainResolution because when resolution changes HLS playback does not play in safari
     */
@@ -143,6 +147,11 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     }
     
     public override init() {
+    }
+    
+    public func setUsernameInfo(username: String, profilePicture: String) {
+        self.username = username
+        self.profilePicture = profilePicture
     }
     
     public func setOptions(url: String, streamId: String, token: String = "", mode: AntMediaClientMode = .join, enableDataChannel: Bool = false, useExternalCameraSource: Bool = false) {
@@ -215,7 +224,9 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
             AntMediaClient.printf("Disable track id is not set \(String(describing: self.disableTrackId))");
         }
         
-        let metaData = "{\"isMicMuted\":\(!audioEnable),\"isCameraOff\":\(!videoEnable)}"
+        let metaData = """
+        {\"isMicMuted\":\(!audioEnable),\"isCameraOff\":\(!videoEnable),\"username\":\(username ?? streamId),\"profilePicture\":\(profilePicture ?? "")}
+        """
         
         let handShakeMesage = HandshakeMessage(command: mode.getName(),
                                                streamId: streamId,
