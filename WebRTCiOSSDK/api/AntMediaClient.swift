@@ -223,6 +223,30 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         return self.publisherStreamId ?? (self.p2pStreamId ?? "");
     }
     
+    
+    public func updateMetaData(isMicMuted: Bool, isCameraOff: Bool) {
+        let metaData = VideoMetaData(isMicMuted: isMicMuted,
+                                     isCameraOff: isCameraOff,
+                                     userId: userId,
+                                     username: username,
+                                     profilePicture: profilePicture)
+        
+        let metaDataJSON = try! JSONEncoder().encode(metaData)
+        let metaDataJSONString = String(data: metaDataJSON, encoding: .utf8)
+        
+        guard let metaDataJSONString else { return }
+        
+        let streamId = getStreamId()
+        let command = [
+            "command": "updateStreamMetaData",
+            "streamId": streamId,
+            "metaData": metaDataJSONString
+        ]
+        
+        webSocket?.write(string: command.json)
+    }
+    
+    
     func getHandshakeMessage(streamId: String, mode: AntMediaClientMode, token:String = "") -> String {
         
         var trackList:[String] = [];
