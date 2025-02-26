@@ -490,6 +490,10 @@ class WebRTCClient: NSObject {
             videoSender.track = nil
         }
         
+        if let view = localVideoView {
+            localVideoTrack?.remove(view)
+        }
+        
         localVideoTrack = createVideoTrack()
         videoSender?.track = localVideoTrack
         
