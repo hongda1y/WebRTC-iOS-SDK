@@ -486,10 +486,6 @@ class WebRTCClient: NSObject {
             (videoCapturer as? RTCCustomFrameCapturer)?.stopCapture()
         }
         
-        if let view = localVideoView {
-            localVideoTrack?.remove(view)
-        }
-        
         if let videoSender {
             videoSender.track = nil
         }

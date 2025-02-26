@@ -563,6 +563,10 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         
     }
     
+    open func removePeerConnection(_ streamId: String) {
+        webRTCClientMap.removeValue(forKey: streamId)
+    }
+    
     open func initPeerConnection(streamId: String = "", mode:AntMediaClientMode=AntMediaClientMode.unspecified, token: String = "") {
         
         let id = getStreamId(streamId);
