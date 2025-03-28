@@ -1300,6 +1300,16 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         webSocket?.write(string: command.json)
     }
     
+    /// Get track list in a room
+    /// It will return a list of StreamID in `onGetTrackList` delegate
+    public func getTrackLists(mainTrackID: String) {
+        let command = ["command": "getTrackList",
+                      "streamId": mainTrackID,
+                      "token": ""]
+        
+        webSocket?.write(string: command.json)
+    }
+    
     /// Recall video track assignment
     public func getVideoTrackAssignment(streamId: String) {
         sendCommand(command: GET_VIDEO_TRACK_ASSIGNMENT,
