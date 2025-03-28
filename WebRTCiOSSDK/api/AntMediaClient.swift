@@ -1016,6 +1016,11 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     private func onCommand(_ command: String, message: [String: Any]) {
         
         switch command {
+        case "trackList":
+            if let trackList = message["trackList"] as? [String] {
+                delegate?.onGetTrackList(trackList)
+            }
+            
             case "start":
                 //if this is called, it's publisher or initiator in p2p
                 let streamId = message[STREAM_ID] as! String
@@ -1139,6 +1144,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                 }
                 
                 break;
+            
             case "pong":
                 //dont do anything
                 break;

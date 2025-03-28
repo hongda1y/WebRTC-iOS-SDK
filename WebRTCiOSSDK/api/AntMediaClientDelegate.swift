@@ -25,6 +25,8 @@ public class StreamInformation {
 }
 public protocol AntMediaClientDelegate: AnyObject {
 
+    func onGetTrackList(_ tracks: [String])
+    
     /**
      Called when websocket is connected
      */
