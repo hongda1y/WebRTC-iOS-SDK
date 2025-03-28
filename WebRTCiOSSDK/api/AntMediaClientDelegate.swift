@@ -184,6 +184,10 @@ public protocol AntMediaClientDelegate: AnyObject {
 
 public extension AntMediaClientDelegate {
     
+    func onGetTrackList(_ tracks: [String]) {
+        AntMediaClient.printf("TrackList: \(tracks)")
+    }
+    
     func clientDidConnect(_ client: AntMediaClient) {
         AntMediaClient.printf("Websocket is connected for \(client.getStreamId())")
     }
