@@ -372,6 +372,12 @@ class WebRTCClient: NSObject {
                 
                 let cameraVideoCapturer = self.videoCapturer as? RTCCameraVideoCapturer;
                 
+                if #available(iOS 16.0, *) {
+                    if cameraVideoCapturer?.captureSession.isMultitaskingCameraAccessSupported == true {
+                        cameraVideoCapturer?.captureSession.isMultitaskingCameraAccessEnabled = true
+                    }
+                }
+                
                 cameraVideoCapturer?.startCapture(with: camera!,
                                                   format: selectedFormat!,
                                                   fps: Int(fps))
