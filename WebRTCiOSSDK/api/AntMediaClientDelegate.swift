@@ -25,7 +25,7 @@ public class StreamInformation {
 }
 public protocol AntMediaClientDelegate: AnyObject {
     
-    func clientDidJoin()
+//    func clientDidJoin()
 
     func onGetTrackList(_ tracks: [String])
     

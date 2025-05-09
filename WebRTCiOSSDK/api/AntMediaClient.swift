@@ -968,7 +968,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     }
     
     private func onJoined() {
-        delegate?.clientDidJoin()
+//        delegate?.clientDidJoin()
     }
     
     
