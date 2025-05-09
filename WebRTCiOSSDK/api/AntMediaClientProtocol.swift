@@ -50,6 +50,8 @@ let ENABLE_AUDIO_TRACK_COMMAND = "toggleAudio"
 let EVENT_TYPE_SCREENCAST_OFF = "SCREENCAST_OFF";
 let EVENT_TYPE_SCREENCAST_ON = "SCREENCAST_ON";
 
+let REQUEST_P2P_METADATA = "requestP2PMetadata"
+
 public protocol AntMediaClientProtocol {
         
     /**

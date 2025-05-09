@@ -246,6 +246,11 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         webSocket?.write(string: command.json)
     }
     
+    public func requestP2PMetaData() {
+        guard let streamId = publisherStreamId else { return }
+        sendNotification(eventType: REQUEST_P2P_METADATA, streamId: streamId)
+    }
+    
     
     func getHandshakeMessage(streamId: String, mode: AntMediaClientMode, token:String = "") -> String {
         
@@ -963,7 +968,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     }
     
     private func onJoined() {
-
+        delegate?.clientDidJoin()
     }
     
     
