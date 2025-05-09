@@ -517,6 +517,8 @@ extension WebRTCClient: RTCDataChannelDelegate
     }
     
     func dataChannelDidChangeState(_ parametersdataChannel: RTCDataChannel)  {
+        delegate?.rtcDataChannelDidChangeState(parametersdataChannel.readyState)
+        
         if (parametersdataChannel.readyState == .open) {
             AntMediaClient.printf("Data channel state is open")
         }

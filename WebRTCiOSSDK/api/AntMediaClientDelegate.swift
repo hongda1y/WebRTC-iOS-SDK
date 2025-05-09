@@ -26,6 +26,8 @@ public class StreamInformation {
 public protocol AntMediaClientDelegate: AnyObject {
     
 //    func clientDidJoin()
+    
+    func dataChannelDidChangeState(_ state: RTCDataChannelState)
 
     func onGetTrackList(_ tracks: [String])
     
@@ -185,6 +187,8 @@ public protocol AntMediaClientDelegate: AnyObject {
 }
 
 public extension AntMediaClientDelegate {
+    
+    func dataChannelDidChangeState(_ state: RTCDataChannelState) {}
     
     func onGetTrackList(_ tracks: [String]) {
         AntMediaClient.printf("TrackList: \(tracks)")

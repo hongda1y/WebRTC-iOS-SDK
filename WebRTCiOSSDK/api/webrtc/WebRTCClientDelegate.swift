@@ -37,4 +37,6 @@ internal protocol WebRTCClientDelegate {
     func connectionStateChanged(newState: RTCIceConnectionState, streamId:String);
     
     func dataReceivedFromDataChannel(didReceiveData data: RTCDataBuffer, streamId:String);
+    
+    func rtcDataChannelDidChangeState(_ state: RTCDataChannelState)
 }
