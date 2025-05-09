@@ -247,7 +247,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     }
     
     public func requestP2PMetaData() {
-        guard let streamId = publisherStreamId else { return }
+        guard let streamId = p2pStreamId else { return }
         sendNotification(eventType: REQUEST_P2P_METADATA, streamId: streamId)
     }
     
