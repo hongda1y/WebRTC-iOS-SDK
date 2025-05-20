@@ -331,16 +331,16 @@ class WebRTCClient: NSObject {
         return iceConnectionState;
     }
     
-    
+    @discardableResult
     private func startCapture() -> Bool {
-//        if let videoCapturer = videoCapturer as? RTCFileVideoCapturer {
+        if let videoCapturer = videoCapturer as? RTCFileVideoCapturer {
 //            try? AVAudioSession.sharedInstance().setActive(true)
-//            videoCapturer.startCapturing(fromFileNamed: "FileCapture.mp4") { error in
-//                print(error.localizedDescription)
-//            }
-//            
-//            return true
-//        }
+            videoCapturer.startCapturing(fromFileNamed: "VideoSample.mp4") { error in
+                print(error.localizedDescription)
+            }
+            
+            return true
+        }
         
         let camera = (RTCCameraVideoCapturer.captureDevices().first { $0.position == self.cameraPosition })
         
@@ -398,8 +398,7 @@ class WebRTCClient: NSObject {
     
     private func createVideoTrack() -> RTCVideoTrack?  {
         
-        if useExternalCameraSource
-        {
+        if useExternalCameraSource {
             //try with screencast video source
             let videoSource = WebRTCClient.factory.videoSource(forScreenCast: true)
             videoCapturer = RTCCustomFrameCapturer.init(delegate: videoSource, height: targetHeight, externalCapture: externalVideoCapture, videoEnabled: videoEnabled, audioEnabled: externalAudio, fps:self.cameraSourceFPS);
@@ -408,11 +407,14 @@ class WebRTCClient: NSObject {
             (videoCapturer as? RTCCustomFrameCapturer)?.startCapture()
             let videoTrack = WebRTCClient.factory.videoTrack(with: videoSource, trackId: "video0")
             return videoTrack
-        }
-        else {
+        } else {
             let videoSource = WebRTCClient.factory.videoSource()
             #if targetEnvironment(simulator)
             videoCapturer = RTCFileVideoCapturer(delegate: videoSource)
+            let captureStarted = startCapture()
+            if (!captureStarted) {
+                return nil;
+            }
             #else
             videoCapturer = RTCCameraVideoCapturer(delegate: videoSource)
             let captureStarted = startCapture()
@@ -434,8 +436,8 @@ class WebRTCClient: NSObject {
         AntMediaClient.printf("Add local media streams")
 //        if (self.videoEnabled)
 //        {
-        #if targetEnvironment(simulator)
-        #else
+//        #if targetEnvironment(simulator)
+//        #else
             self.localVideoTrack = createVideoTrack();
 
             self.videoSender = self.peerConnection?.add(self.localVideoTrack,  streamIds: [LOCAL_MEDIA_STREAM_ID])
@@ -448,7 +450,7 @@ class WebRTCClient: NSObject {
             else {
                 AntMediaClient.printf("DegradationPreference cannot be set");
             }
-        #endif
+//        #endif
 //        }
             
         let audioSource = WebRTCClient.factory.audioSource(with: Config.createTestConstraints())

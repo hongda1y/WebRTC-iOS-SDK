@@ -54,7 +54,7 @@ open class ConferenceViewController: UIViewController ,  AVCaptureVideoDataOutpu
         self.publisherStreamId = generateRandomAlphanumericString(length: 10);
         
         #if targetEnvironment(simulator)
-        conferenceClient?.setVideoEnable(enable: false)
+//        conferenceClient?.setVideoEnable(enable: true)
         #else
         conferenceClient?.setVideoEnable(enable: true)
         #endif
