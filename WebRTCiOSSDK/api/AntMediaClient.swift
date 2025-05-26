@@ -123,6 +123,8 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     private var userId: Int?
     private var username: String?
     private var profilePicture: String?
+    private var role: String?
+    
     private var metaData: [String: Any] = [:]
     
     /**
@@ -155,6 +157,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         var userId: Int?
         var username: String?
         var profilePicture: String?
+        var role: String?
     }
     
     public override init() {
@@ -164,10 +167,11 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         self.metaData = metaData
     }
     
-    public func setUsernameInfo(userId: Int?, username: String, profilePicture: String) {
+    public func setUsernameInfo(userId: Int?, username: String, profilePicture: String, role: String) {
         self.userId = userId
         self.username = username
         self.profilePicture = profilePicture
+        self.role = role
     }
     
     public func setOptions(url: String, streamId: String, token: String = "", mode: AntMediaClientMode = .join, enableDataChannel: Bool = false, useExternalCameraSource: Bool = false) {
@@ -230,18 +234,19 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     
     
     public func updateMetaData(isMicMuted: Bool, isCameraOff: Bool) {
-//        let metaData = VideoMetaData(isMicMuted: isMicMuted,
-//                                     isCameraOff: isCameraOff,
-//                                     userId: userId,
-//                                     username: username,
-//                                     profilePicture: profilePicture)
+        let metaData = VideoMetaData(isMicMuted: isMicMuted,
+                                     isCameraOff: isCameraOff,
+                                     userId: userId,
+                                     username: username,
+                                     profilePicture: profilePicture,
+                                     role: role)
         
-//        let metaDataJSON = try! JSONEncoder().encode(metaData)
+        let metaDataJSON = try! JSONEncoder().encode(metaData)
         
-        guard let metaDataJSON = try? JSONSerialization.data(withJSONObject: metaData, options: .prettyPrinted) else {
-            print("Something is wrong while converting dictionary to JSON data.")
-            return
-        }
+//        guard let metaDataJSON = try? JSONSerialization.data(withJSONObject: metaData, options: .prettyPrinted) else {
+//            print("Something is wrong while converting dictionary to JSON data.")
+//            return
+//        }
         
         let metaDataJSONString = String(data: metaDataJSON, encoding: .utf8)
         
@@ -275,21 +280,22 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
             AntMediaClient.printf("Disable track id is not set \(String(describing: self.disableTrackId))");
         }
         
-//        let metaData = VideoMetaData(isMicMuted: !audioEnable,
-//                                     isCameraOff: !videoEnable,
-//                                     userId: userId,
-//                                     username: username,
-//                                     profilePicture: profilePicture)
-//        
-//        let metaDataJSON = try! JSONEncoder().encode(metaData)
-//        let metaDataJSONString = String(data: metaDataJSON, encoding: .utf8)
+        let metaData = VideoMetaData(isMicMuted: !audioEnable,
+                                     isCameraOff: !videoEnable,
+                                     userId: userId,
+                                     username: username,
+                                     profilePicture: profilePicture,
+                                     role: role)
         
-        guard let metaDataJSON = try? JSONSerialization.data(withJSONObject: metaData, options: .prettyPrinted) else {
-            print("Something is wrong while converting dictionary to JSON data.")
-            return ""
-        }
-        
+        let metaDataJSON = try! JSONEncoder().encode(metaData)
         let metaDataJSONString = String(data: metaDataJSON, encoding: .utf8)
+        
+//        guard let metaDataJSON = try? JSONSerialization.data(withJSONObject: metaData, options: .prettyPrinted) else {
+//            print("Something is wrong while converting dictionary to JSON data.")
+//            return ""
+//        }
+//        
+//        let metaDataJSONString = String(data: metaDataJSON, encoding: .utf8)
         
         let handShakeMesage = HandshakeMessage(command: mode.getName(),
                                                streamId: streamId,
