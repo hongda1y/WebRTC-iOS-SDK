@@ -30,10 +30,16 @@ let STREAM_INFORMATION_COMMAND = "streamInformation";
 let FORCE_STREAM_QUALITY_INFO = "forceStreamQuality";
 let STREAM_HEIGHT_FIELD = "streamHeight";
 public let EVENT_TYPE = "eventType";
+
 public let EVENT_TYPE_MIC_MUTED = "MIC_MUTED"
 public let EVENT_TYPE_MIC_UNMUTED = "MIC_UNMUTED";
+
+public let EVENT_TURN_YOUR_MIC_OFF = "TURN_YOUR_MIC_OFF"
+public let EVENT_TURN_YOUR_MIC_ON = "TURN_YOUR_MIC_ON"
+
 public let EVENT_TYPE_CAM_TURNED_OFF = "CAM_TURNED_OFF";
 public let EVENT_TYPE_CAM_TURNED_ON = "CAM_TURNED_ON";
+
 let GET_BROADCAST_OBJECT_COMMAND = "getBroadcastObject"
 let BROADCAST_OBJECT_NOTIFICATION = "broadcastObject"
 public let RESOLUTION_CHANGE_INFO_COMMAND = "resolutionChangeInfo"

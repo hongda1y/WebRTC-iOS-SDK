@@ -740,6 +740,8 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         self.sendAudioTrackStatusNotification(enabled:enableTrack);
     }
     
+    
+    
     public func sendNotification(eventType:String, streamId: String = "", info: [String: String]? = nil) {
         var notification =  [
             EVENT_TYPE: eventType,
@@ -782,6 +784,15 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
             }
             AntMediaClient.rtcAudioSession.unlockForConfiguration()
         }
+    }
+    
+    open func setParticipantMicMute(_ mute: Bool, participantStreamID: String) {
+        let eventType = mute ? EVENT_TURN_YOUR_MIC_OFF : EVENT_TURN_YOUR_MIC_ON
+        let senderStreamID = getPublisherStreamId()
+        
+        sendNotification(eventType: eventType,
+                         info: ["streamId": participantStreamID,
+                                "senderStreamId": senderStreamID])
     }
     
     open func toggleVideo() {
