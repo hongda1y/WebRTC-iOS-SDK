@@ -123,6 +123,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     private var userId: Int?
     private var username: String?
     private var profilePicture: String?
+    private var metaData: [String: Any] = [:]
     
     /**
     Degradation preference when publishing streams. By default its values is maintainResolution because when resolution changes HLS playback does not play in safari
@@ -157,6 +158,10 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     }
     
     public override init() {
+    }
+    
+    public func setMetaData(_ metaData: [String: Any]) {
+        self.metaData = metaData
     }
     
     public func setUsernameInfo(userId: Int?, username: String, profilePicture: String) {
@@ -225,13 +230,19 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     
     
     public func updateMetaData(isMicMuted: Bool, isCameraOff: Bool) {
-        let metaData = VideoMetaData(isMicMuted: isMicMuted,
-                                     isCameraOff: isCameraOff,
-                                     userId: userId,
-                                     username: username,
-                                     profilePicture: profilePicture)
+//        let metaData = VideoMetaData(isMicMuted: isMicMuted,
+//                                     isCameraOff: isCameraOff,
+//                                     userId: userId,
+//                                     username: username,
+//                                     profilePicture: profilePicture)
         
-        let metaDataJSON = try! JSONEncoder().encode(metaData)
+//        let metaDataJSON = try! JSONEncoder().encode(metaData)
+        
+        guard let metaDataJSON = try? JSONSerialization.data(withJSONObject: metaData, options: .prettyPrinted) else {
+            print("Something is wrong while converting dictionary to JSON data.")
+            return
+        }
+        
         let metaDataJSONString = String(data: metaDataJSON, encoding: .utf8)
         
         guard let metaDataJSONString else { return }
@@ -264,13 +275,20 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
             AntMediaClient.printf("Disable track id is not set \(String(describing: self.disableTrackId))");
         }
         
-        let metaData = VideoMetaData(isMicMuted: !audioEnable,
-                                     isCameraOff: !videoEnable,
-                                     userId: userId,
-                                     username: username,
-                                     profilePicture: profilePicture)
+//        let metaData = VideoMetaData(isMicMuted: !audioEnable,
+//                                     isCameraOff: !videoEnable,
+//                                     userId: userId,
+//                                     username: username,
+//                                     profilePicture: profilePicture)
+//        
+//        let metaDataJSON = try! JSONEncoder().encode(metaData)
+//        let metaDataJSONString = String(data: metaDataJSON, encoding: .utf8)
         
-        let metaDataJSON = try! JSONEncoder().encode(metaData)
+        guard let metaDataJSON = try? JSONSerialization.data(withJSONObject: metaData, options: .prettyPrinted) else {
+            print("Something is wrong while converting dictionary to JSON data.")
+            return ""
+        }
+        
         let metaDataJSONString = String(data: metaDataJSON, encoding: .utf8)
         
         let handShakeMesage = HandshakeMessage(command: mode.getName(),

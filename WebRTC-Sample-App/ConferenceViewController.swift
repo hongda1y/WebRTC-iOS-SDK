@@ -48,7 +48,13 @@ open class ConferenceViewController: UIViewController ,  AVCaptureVideoDataOutpu
         self.conferenceClient?.delegate = self
         self.conferenceClient?.setWebSocketServerUrl(url: self.clientUrl)
         self.conferenceClient?.setLocalView(container: self.localView)
-        self.conferenceClient?.setUsernameInfo(userId: 1, username: "Socheat", profilePicture: "test profile")
+//        self.conferenceClient?.setUsernameInfo(userId: 1, username: "Socheat", profilePicture: "test profile")
+        
+        self.conferenceClient?.setMetaData([
+            "userId": 1,
+            "username": "Socheat",
+            "profilePicture": "https://images.unsplash.com/photo-1511367461989-f85a21fda167?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cHJvZmlsZXxlbnwwfHwwfHx8MA%3D%3D"
+        ])
         
         //this publishes stream to the room
         self.publisherStreamId = generateRandomAlphanumericString(length: 10);

@@ -54,6 +54,7 @@
 		A8DAC0522A063D300007CDE7 /* WebRTC.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = A8DABFFD2A063A500007CDE7 /* WebRTC.xcframework */; };
 		A8DAC0532A063D300007CDE7 /* WebRTC.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A8DABFFD2A063A500007CDE7 /* WebRTC.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A8DAC0A42A0672040007CDE7 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A8DAC0A22A0672040007CDE7 /* LaunchScreen.storyboard */; };
+		DCAA41752DDD71C400B3E288 /* VideoSample.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = DCAA41742DDD71C400B3E288 /* VideoSample.mp4 */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -196,6 +197,7 @@
 		A8DAC03F2A063BC00007CDE7 /* Run.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Run.swift; sourceTree = "<group>"; };
 		A8DAC0402A063BC00007CDE7 /* ConferenceViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConferenceViewController.swift; sourceTree = "<group>"; };
 		A8DAC0A32A0672040007CDE7 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		DCAA41742DDD71C400B3E288 /* VideoSample.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = VideoSample.mp4; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -360,6 +362,7 @@
 				A8DAC0162A063AB50007CDE7 /* Info.plist */,
 				A8DAC00E2A063AB30007CDE7 /* WebRTC_Sample_App.xcdatamodeld */,
 				A8C0684D2C45036F00BAD624 /* CellView.swift */,
+				DCAA41742DDD71C400B3E288 /* VideoSample.mp4 */,
 			);
 			path = "WebRTC-Sample-App";
 			sourceTree = "<group>";
@@ -633,6 +636,7 @@
 			files = (
 				A8DAC0A42A0672040007CDE7 /* LaunchScreen.storyboard in Resources */,
 				A8DAC0122A063AB50007CDE7 /* Assets.xcassets in Resources */,
+				DCAA41752DDD71C400B3E288 /* VideoSample.mp4 in Resources */,
 				A8DAC00D2A063AB30007CDE7 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
