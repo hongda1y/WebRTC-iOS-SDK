@@ -740,12 +740,16 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         self.sendAudioTrackStatusNotification(enabled:enableTrack);
     }
     
-    public func sendNotification(eventType:String, streamId: String = "") {
-        let notification =  [
+    public func sendNotification(eventType:String, streamId: String = "", info: [String: String]? = nil) {
+        var notification =  [
             EVENT_TYPE: eventType,
-            STREAM_ID: self.getStreamId()].json;
+            STREAM_ID: self.getStreamId()]
         
-        if let data = notification.data(using: .utf8) {
+        if let info {
+            notification.merge(info) { _, new in new }
+        }
+        
+        if let data = notification.json.data(using: .utf8) {
             self.webRTCClientMap[self.publisherStreamId ?? (self.p2pStreamId ?? "")]?.sendData(data: data);
         }
        

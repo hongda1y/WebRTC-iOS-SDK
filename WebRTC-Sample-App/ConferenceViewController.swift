@@ -97,6 +97,17 @@ open class ConferenceViewController: UIViewController ,  AVCaptureVideoDataOutpu
 
 extension ConferenceViewController: AntMediaClientDelegate
 {
+    public func dataChannelDidChangeState(_ state: RTCDataChannelState) {
+        if state == .open {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                self.conferenceClient?.sendNotification(eventType: "TURN_YOUR_MIC_OFF", info: [
+                    "senderStreamId": self.publisherStreamId,
+                    "streamId": self.publisherStreamId
+                ])
+            }
+        }
+    }
+    
     public func clientHasError(_ message: String) {
         
     }
