@@ -274,12 +274,17 @@ public class PreviewedCameraManager: NSObject {
     
     private func findCamera(position: AVCaptureDevice.Position) -> AVCaptureDevice? {
         // iOS 10+ discovery session
+        var deviceType: [AVCaptureDevice.DeviceType] = [
+            .builtInWideAngleCamera,
+            .builtInTelephotoCamera
+        ]
+        
+        if #available(iOS 13.0, *) {
+            deviceType.append(.builtInUltraWideCamera)
+        }
+        
         let discoverySession = AVCaptureDevice.DiscoverySession(
-            deviceTypes: [
-                .builtInWideAngleCamera,
-                .builtInTelephotoCamera,
-                .builtInUltraWideCamera
-            ],
+            deviceTypes: deviceType,
             mediaType: .video,
             position: position
         )
