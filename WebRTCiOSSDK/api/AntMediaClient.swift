@@ -107,6 +107,8 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     //Screen capture of the app's screen.
     private var useExternalCameraSource: Bool = false
     
+    private var videoEffect: VideoEffect? = nil
+    
     private var isWebSocketConnected: Bool = false;
     private var isWebSocketConnecting: Bool = false;
     
@@ -289,13 +291,6 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         
         let metaDataJSON = try! JSONEncoder().encode(metaData)
         let metaDataJSONString = String(data: metaDataJSON, encoding: .utf8)
-        
-//        guard let metaDataJSON = try? JSONSerialization.data(withJSONObject: metaData, options: .prettyPrinted) else {
-//            print("Something is wrong while converting dictionary to JSON data.")
-//            return ""
-//        }
-//        
-//        let metaDataJSONString = String(data: metaDataJSON, encoding: .utf8)
         
         let handShakeMesage = HandshakeMessage(command: mode.getName(),
                                                streamId: streamId,
@@ -603,7 +598,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         if (self.webRTCClientMap[id] == nil) {
             AntMediaClient.printf("Has wsClient? (start) : \(String(describing: self.webRTCClientMap[id]))")
             
-            self.webRTCClientMap[id] = WebRTCClient.init(remoteVideoView: remoteView, localVideoView: localView, delegate: self, mode: mode != .unspecified ? mode : self.mode , cameraPosition: self.cameraPosition, targetWidth: self.targetWidth, targetHeight: self.targetHeight, videoEnabled: self.videoEnable, enableDataChannel: self.enableDataChannel, useExternalCameraSource: self.useExternalCameraSource, externalAudio: self.externalAudioEnabled, externalVideoCapture: self.externalVideoCapture, cameraSourceFPS: self.cameraSourceFPS, streamId:id,
+            self.webRTCClientMap[id] = WebRTCClient.init(remoteVideoView: remoteView, localVideoView: localView, delegate: self, mode: mode != .unspecified ? mode : self.mode , cameraPosition: self.cameraPosition, targetWidth: self.targetWidth, targetHeight: self.targetHeight, videoEnabled: self.videoEnable, enableDataChannel: self.enableDataChannel, useExternalCameraSource: self.useExternalCameraSource, videoEffect: videoEffect, externalAudio: self.externalAudioEnabled, externalVideoCapture: self.externalVideoCapture, cameraSourceFPS: self.cameraSourceFPS, streamId:id,
                                                          degradationPreference: self.degradationPreference);
             
             self.webRTCClientMap[id]?.setToken(token)
@@ -616,6 +611,14 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
             AntMediaClient.printf("WebRTCClient already initialized for id:\(id) and mode:\(mode.getName())")
         }
     }
+    
+    /// Video Effect
+    
+    open func useVideoEffect(_ effect: VideoEffect? = nil) {
+        self.videoEffect = effect
+        webRTCClientMap[(publisherStreamId ?? p2pStreamId) ?? ""]?.useVideoEffect(effect)
+    }
+    
     
     /*
      Just switches the camera. It works on the fly as well

@@ -40,6 +40,8 @@ open class ConferenceViewController: UIViewController ,  AVCaptureVideoDataOutpu
     open override func viewWillAppear(_ animated: Bool)
     {
         
+        localView.backgroundColor = .black
+        
         collectionView.dataSource = self
         collectionView.delegate = self
         
@@ -48,7 +50,7 @@ open class ConferenceViewController: UIViewController ,  AVCaptureVideoDataOutpu
         self.conferenceClient?.delegate = self
         self.conferenceClient?.setWebSocketServerUrl(url: self.clientUrl)
         self.conferenceClient?.setLocalView(container: self.localView)
-//        self.conferenceClient?.setUsernameInfo(userId: 1, username: "Socheat", profilePicture: "test profile")
+        //        self.conferenceClient?.setUsernameInfo(userId: 1, username: "Socheat", profilePicture: "test profile")
         
         self.conferenceClient?.setMetaData([
             "userId": 1,
@@ -59,13 +61,24 @@ open class ConferenceViewController: UIViewController ,  AVCaptureVideoDataOutpu
         //this publishes stream to the room
         self.publisherStreamId = generateRandomAlphanumericString(length: 10);
         
-        #if targetEnvironment(simulator)
-//        conferenceClient?.setVideoEnable(enable: true)
-        #else
+#if targetEnvironment(simulator)
+        //        conferenceClient?.setVideoEnable(enable: true)
+#else
         conferenceClient?.setVideoEnable(enable: true)
-        #endif
+#endif
         
+        self.conferenceClient?.setTargetResolution(width: 854, height: 480)
         self.conferenceClient?.publish(streamId: self.publisherStreamId, token: "", mainTrackId: roomId);
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            if let image = UIImage(named: "conferenceBackground") {
+                self.conferenceClient?.useVideoEffect(.image(image: image))
+            }
+        }
+        
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+//            self.conferenceClient?.useVideoEffect(nil)
+//        }
         
         //this plays the streams in the room
         
@@ -95,18 +108,7 @@ open class ConferenceViewController: UIViewController ,  AVCaptureVideoDataOutpu
 }
 
 
-extension ConferenceViewController: AntMediaClientDelegate
-{
-    public func dataChannelDidChangeState(_ state: RTCDataChannelState) {
-        if state == .open {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                self.conferenceClient?.sendNotification(eventType: "TURN_YOUR_MIC_OFF", info: [
-                    "senderStreamId": self.publisherStreamId,
-                    "streamId": self.publisherStreamId
-                ])
-            }
-        }
-    }
+extension ConferenceViewController: AntMediaClientDelegate {
     
     public func clientHasError(_ message: String) {
         
@@ -118,19 +120,18 @@ extension ConferenceViewController: AntMediaClientDelegate
     }
     
     public func clientDidDisconnect(_ message: String) {
-        removePlayers();
+        removePlayers()
     }
     public func playStarted(streamId: String) {
-        print("play started");
-        AntMediaClient.speakerOn();
+        print("play started")
+        AntMediaClient.speakerOn()
     }
     
     public func trackAdded(track: RTCMediaStreamTrack, stream: [RTCMediaStream]) {
-                
+        
         AntMediaClient.printf("Track is added with id:\(track.trackId), streamID: \(stream.first?.streamId) ")
-        if let videoTrack = track as? RTCVideoTrack
-        {
-            remoteViewTrackMap.append(videoTrack);
+        if let videoTrack = track as? RTCVideoTrack {
+            remoteViewTrackMap.append(videoTrack)
             Run.onMainThread {
                 self.collectionView.reloadData()
             }
@@ -140,24 +141,21 @@ extension ConferenceViewController: AntMediaClientDelegate
     public func trackRemoved(track: RTCMediaStreamTrack) {
         
         Run.onMainThread { [self] in
-            var i = 0;
+            var i = 0
             
-            while (i < remoteViewTrackMap.count)
-            {
-                if (remoteViewTrackMap[i]?.trackId == track.trackId)
-                {
+            while (i < remoteViewTrackMap.count) {
+                if (remoteViewTrackMap[i]?.trackId == track.trackId) {
                     remoteViewTrackMap.remove(at: i)
-                    collectionView.reloadData();
-                    break;
+                    collectionView.reloadData()
+                    break
                 }
                 i += 1
             }
         }
-        
     }
     
     public func playFinished(streamId: String) {
-        removePlayers();
+        removePlayers()
     }
     
     public func publishStarted(streamId: String) {

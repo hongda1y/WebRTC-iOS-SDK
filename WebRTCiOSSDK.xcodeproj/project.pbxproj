@@ -54,6 +54,10 @@
 		A8DAC0522A063D300007CDE7 /* WebRTC.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = A8DABFFD2A063A500007CDE7 /* WebRTC.xcframework */; };
 		A8DAC0532A063D300007CDE7 /* WebRTC.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A8DABFFD2A063A500007CDE7 /* WebRTC.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A8DAC0A42A0672040007CDE7 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A8DAC0A22A0672040007CDE7 /* LaunchScreen.storyboard */; };
+		DC6BEC602DE5A2CE007FC094 /* RTCVideoPipe.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC6BEC5F2DE5A2CE007FC094 /* RTCVideoPipe.swift */; };
+		DC6BEC622DE5A2E8007FC094 /* RTCVirtualBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC6BEC612DE5A2E8007FC094 /* RTCVirtualBackground.swift */; };
+		DC6BEC642DE6B426007FC094 /* VideoEffect.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC6BEC632DE6B424007FC094 /* VideoEffect.swift */; };
+		DC6BEC692DE803CB007FC094 /* PreviewCameraViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC6BEC682DE803C4007FC094 /* PreviewCameraViewController.swift */; };
 		DCAA41752DDD71C400B3E288 /* VideoSample.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = DCAA41742DDD71C400B3E288 /* VideoSample.mp4 */; };
 /* End PBXBuildFile section */
 
@@ -197,6 +201,10 @@
 		A8DAC03F2A063BC00007CDE7 /* Run.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Run.swift; sourceTree = "<group>"; };
 		A8DAC0402A063BC00007CDE7 /* ConferenceViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConferenceViewController.swift; sourceTree = "<group>"; };
 		A8DAC0A32A0672040007CDE7 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		DC6BEC5F2DE5A2CE007FC094 /* RTCVideoPipe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTCVideoPipe.swift; sourceTree = "<group>"; };
+		DC6BEC612DE5A2E8007FC094 /* RTCVirtualBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTCVirtualBackground.swift; sourceTree = "<group>"; };
+		DC6BEC632DE6B424007FC094 /* VideoEffect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoEffect.swift; sourceTree = "<group>"; };
+		DC6BEC682DE803C4007FC094 /* PreviewCameraViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewCameraViewController.swift; sourceTree = "<group>"; };
 		DCAA41742DDD71C400B3E288 /* VideoSample.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = VideoSample.mp4; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -323,6 +331,8 @@
 		A8DABFE22A063A020007CDE7 /* api */ = {
 			isa = PBXGroup;
 			children = (
+				DC6BEC612DE5A2E8007FC094 /* RTCVirtualBackground.swift */,
+				DC6BEC5F2DE5A2CE007FC094 /* RTCVideoPipe.swift */,
 				A8DABFE42A063A020007CDE7 /* AntMediaClient.swift */,
 				A8DABFE52A063A020007CDE7 /* AntMediaError.swift */,
 				A8DABFE62A063A020007CDE7 /* AntMediaClientProtocol.swift */,
@@ -335,6 +345,7 @@
 		A8DABFE82A063A020007CDE7 /* webrtc */ = {
 			isa = PBXGroup;
 			children = (
+				DC6BEC632DE6B424007FC094 /* VideoEffect.swift */,
 				A8DABFE92A063A020007CDE7 /* RTCCustomFrameCapturer.swift */,
 				A8DABFEA2A063A020007CDE7 /* Config.swift */,
 				A8DABFEB2A063A020007CDE7 /* WebRTCClientDelegate.swift */,
@@ -348,6 +359,7 @@
 		A8DAC0042A063AB30007CDE7 /* WebRTC-Sample-App */ = {
 			isa = PBXGroup;
 			children = (
+				DC6BEC682DE803C4007FC094 /* PreviewCameraViewController.swift */,
 				A8522FE02B832967007BC5A8 /* WebRTC-Sample-AppDebug.entitlements */,
 				A8B966022A0698EC00D67CA1 /* WebRTC-Sample-App.entitlements */,
 				A8DAC0A22A0672040007CDE7 /* LaunchScreen.storyboard */,
@@ -672,11 +684,14 @@
 			files = (
 				A8DABFF92A063A020007CDE7 /* String.swift in Sources */,
 				A8DABFF82A063A020007CDE7 /* Dictionary.swift in Sources */,
+				DC6BEC642DE6B426007FC094 /* VideoEffect.swift in Sources */,
 				A8DABFF02A063A020007CDE7 /* AntMediaClient.swift in Sources */,
 				A8DABFF42A063A020007CDE7 /* RTCCustomFrameCapturer.swift in Sources */,
 				A8DABFF52A063A020007CDE7 /* Config.swift in Sources */,
+				DC6BEC622DE5A2E8007FC094 /* RTCVirtualBackground.swift in Sources */,
 				A8DABFF12A063A020007CDE7 /* AntMediaError.swift in Sources */,
 				A8DABFF72A063A020007CDE7 /* WebRTCClient.swift in Sources */,
+				DC6BEC602DE5A2CE007FC094 /* RTCVideoPipe.swift in Sources */,
 				A8DABFF32A063A020007CDE7 /* AntMediaClientDelegate.swift in Sources */,
 				A8DABFF62A063A020007CDE7 /* WebRTCClientDelegate.swift in Sources */,
 				A8DABFF22A063A020007CDE7 /* AntMediaClientProtocol.swift in Sources */,
@@ -704,6 +719,7 @@
 				A8DAC0442A063BC00007CDE7 /* AlertHelper.swift in Sources */,
 				A8DAC0422A063BC00007CDE7 /* WelcomeViewController.swift in Sources */,
 				A8DAC0482A063BC00007CDE7 /* ConferenceViewController.swift in Sources */,
+				DC6BEC692DE803CB007FC094 /* PreviewCameraViewController.swift in Sources */,
 				A8C0684E2C45036F00BAD624 /* CellView.swift in Sources */,
 				A8DAC0412A063BC00007CDE7 /* VideoViewController.swift in Sources */,
 				A8DAC0472A063BC00007CDE7 /* Run.swift in Sources */,

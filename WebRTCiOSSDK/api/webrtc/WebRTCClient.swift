@@ -24,6 +24,8 @@ class WebRTCClient: NSObject {
     var peerConnection : RTCPeerConnection?
     
     private var videoCapturer: RTCVideoCapturer?
+    private var pipe: RTCVideoPipe?
+    
     var localVideoTrack: RTCVideoTrack!
     var localAudioTrack: RTCAudioTrack!
     var remoteVideoTrack: RTCVideoTrack!
@@ -43,6 +45,8 @@ class WebRTCClient: NSObject {
      If it's true, it does not open the local camera. When it's set to true, it can record the screen in-app or you can give external frames through your application or BroadcastExtension. If you give external frames or through BroadcastExtension, you need to set the externalVideoCapture to true as well
      */
     private var useExternalCameraSource: Bool = false;
+    
+    private var videoEffect: VideoEffect? = nil
     
     private var enableDataChannel: Bool = false;
     
@@ -94,7 +98,7 @@ class WebRTCClient: NSObject {
                   mode: mode, cameraPosition: cameraPosition, targetWidth: targetWidth, targetHeight: targetHeight, videoEnabled: true, enableDataChannel:false, useExternalCameraSource: false, streamId: streamId)
     }
     
-    public convenience init(remoteVideoView: RTCVideoRenderer?, localVideoView: RTCVideoRenderer?, delegate: WebRTCClientDelegate, mode: AntMediaClientMode, cameraPosition: AVCaptureDevice.Position, targetWidth: Int, targetHeight: Int, videoEnabled: Bool, enableDataChannel: Bool, useExternalCameraSource: Bool, externalAudio: Bool = false, externalVideoCapture: Bool = false, cameraSourceFPS: Int = 30, streamId: String,
+    public convenience init(remoteVideoView: RTCVideoRenderer?, localVideoView: RTCVideoRenderer?, delegate: WebRTCClientDelegate, mode: AntMediaClientMode, cameraPosition: AVCaptureDevice.Position, targetWidth: Int, targetHeight: Int, videoEnabled: Bool, enableDataChannel: Bool, useExternalCameraSource: Bool, videoEffect: VideoEffect? = nil, externalAudio: Bool = false, externalVideoCapture: Bool = false, cameraSourceFPS: Int = 30, streamId: String,
                             degradationPreference: RTCDegradationPreference = RTCDegradationPreference.maintainResolution) {
         self.init(remoteVideoView: remoteVideoView, localVideoView: localVideoView, delegate: delegate, externalAudio: externalAudio)
         self.cameraPosition = cameraPosition
@@ -102,6 +106,7 @@ class WebRTCClient: NSObject {
         self.targetHeight = targetHeight
         self.videoEnabled = videoEnabled
         self.useExternalCameraSource = useExternalCameraSource;
+        self.videoEffect = videoEffect
         self.enableDataChannel = enableDataChannel;
         self.externalVideoCapture = externalVideoCapture;
         self.cameraSourceFPS = cameraSourceFPS;
@@ -408,7 +413,7 @@ class WebRTCClient: NSObject {
             let videoTrack = WebRTCClient.factory.videoTrack(with: videoSource, trackId: "video0")
             return videoTrack
         } else {
-            let videoSource = WebRTCClient.factory.videoSource()
+            var videoSource = WebRTCClient.factory.videoSource()
             #if targetEnvironment(simulator)
             videoCapturer = RTCFileVideoCapturer(delegate: videoSource)
             let captureStarted = startCapture()
@@ -416,7 +421,24 @@ class WebRTCClient: NSObject {
                 return nil;
             }
             #else
-            videoCapturer = RTCCameraVideoCapturer(delegate: videoSource)
+            
+            if let videoEffect {
+                pipe = nil
+                pipe = RTCVideoPipe(videoSource: videoSource)
+                
+                switch videoEffect {
+                case .blur:
+                    pipe?.setBackgroundImage(image: nil)
+                case .image(let image):
+                    pipe?.setBackgroundImage(image: image)
+                }
+                
+                videoCapturer = RTCCameraVideoCapturer(delegate: pipe!)
+                
+            } else {
+                videoCapturer = RTCCameraVideoCapturer(delegate: videoSource)
+            }
+            
             let captureStarted = startCapture()
             if (!captureStarted) {
                 return nil;
@@ -430,6 +452,7 @@ class WebRTCClient: NSObject {
     }
     
     
+    @discardableResult
     private func addLocalMediaStream() -> Bool {
         
         
@@ -487,6 +510,28 @@ class WebRTCClient: NSObject {
     public func switchToScreencast(_ screenCast: Bool) {
         useExternalCameraSource = screenCast
         externalVideoCapture = screenCast
+        
+        if videoCapturer is RTCCameraVideoCapturer {
+            (videoCapturer as? RTCCameraVideoCapturer)?.stopCapture()
+        } else if videoCapturer is RTCCustomFrameCapturer {
+            (videoCapturer as? RTCCustomFrameCapturer)?.stopCapture()
+        }
+        
+        if let videoSender {
+            videoSender.track = nil
+        }
+        
+        localVideoTrack = createVideoTrack()
+        videoSender?.track = localVideoTrack
+        
+        if let localVideoView {
+            localVideoTrack.add(localVideoView)
+//            localVideoTrack.isEnabled = true
+        }
+    }
+    
+    public func useVideoEffect(_ effect: VideoEffect? = nil) {
+        self.videoEffect = effect
         
         if videoCapturer is RTCCameraVideoCapturer {
             (videoCapturer as? RTCCameraVideoCapturer)?.stopCapture()
