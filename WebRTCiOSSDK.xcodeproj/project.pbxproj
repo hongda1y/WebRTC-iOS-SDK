@@ -58,6 +58,7 @@
 		DC6BEC622DE5A2E8007FC094 /* RTCVirtualBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC6BEC612DE5A2E8007FC094 /* RTCVirtualBackground.swift */; };
 		DC6BEC642DE6B426007FC094 /* VideoEffect.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC6BEC632DE6B424007FC094 /* VideoEffect.swift */; };
 		DC6BEC692DE803CB007FC094 /* PreviewCameraViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC6BEC682DE803C4007FC094 /* PreviewCameraViewController.swift */; };
+		DC6BEC6B2DE850F2007FC094 /* PreviewedCameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC6BEC6A2DE850F2007FC094 /* PreviewedCameraManager.swift */; };
 		DCAA41752DDD71C400B3E288 /* VideoSample.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = DCAA41742DDD71C400B3E288 /* VideoSample.mp4 */; };
 /* End PBXBuildFile section */
 
@@ -205,6 +206,7 @@
 		DC6BEC612DE5A2E8007FC094 /* RTCVirtualBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTCVirtualBackground.swift; sourceTree = "<group>"; };
 		DC6BEC632DE6B424007FC094 /* VideoEffect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoEffect.swift; sourceTree = "<group>"; };
 		DC6BEC682DE803C4007FC094 /* PreviewCameraViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewCameraViewController.swift; sourceTree = "<group>"; };
+		DC6BEC6A2DE850F2007FC094 /* PreviewedCameraManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewedCameraManager.swift; sourceTree = "<group>"; };
 		DCAA41742DDD71C400B3E288 /* VideoSample.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = VideoSample.mp4; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -331,6 +333,7 @@
 		A8DABFE22A063A020007CDE7 /* api */ = {
 			isa = PBXGroup;
 			children = (
+				DC6BEC6A2DE850F2007FC094 /* PreviewedCameraManager.swift */,
 				DC6BEC612DE5A2E8007FC094 /* RTCVirtualBackground.swift */,
 				DC6BEC5F2DE5A2CE007FC094 /* RTCVideoPipe.swift */,
 				A8DABFE42A063A020007CDE7 /* AntMediaClient.swift */,
@@ -686,6 +689,7 @@
 				A8DABFF82A063A020007CDE7 /* Dictionary.swift in Sources */,
 				DC6BEC642DE6B426007FC094 /* VideoEffect.swift in Sources */,
 				A8DABFF02A063A020007CDE7 /* AntMediaClient.swift in Sources */,
+				DC6BEC6B2DE850F2007FC094 /* PreviewedCameraManager.swift in Sources */,
 				A8DABFF42A063A020007CDE7 /* RTCCustomFrameCapturer.swift in Sources */,
 				A8DABFF52A063A020007CDE7 /* Config.swift in Sources */,
 				DC6BEC622DE5A2E8007FC094 /* RTCVirtualBackground.swift in Sources */,
