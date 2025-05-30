@@ -33,6 +33,8 @@ public class PreviewedCameraManager: NSObject {
     private var frameDropCount = 0
     private let maxConsecutiveDrops = 5
     
+    private var isCameraAvailable: Bool = true
+    
     // Frame rate limiting
     private var lastFrameTime: CFTimeInterval = 0
     
@@ -59,7 +61,7 @@ public class PreviewedCameraManager: NSObject {
     
     // MARK: - Public Methods
     public func startCapture() {
-        guard !captureSession.isRunning else { return }
+        guard !captureSession.isRunning, isCameraAvailable else { return }
         
         DispatchQueue.global(qos: .background).async { [weak self] in
             self?.captureSession.startRunning()
@@ -67,7 +69,7 @@ public class PreviewedCameraManager: NSObject {
     }
     
     public func stopCapture() {
-        guard captureSession.isRunning else { return }
+        guard captureSession.isRunning, isCameraAvailable else { return }
         
         captureSession.stopRunning()
         
@@ -186,9 +188,12 @@ public class PreviewedCameraManager: NSObject {
         
         // Find camera device
         guard let camera = findCamera(position: position) else {
+            isCameraAvailable = false
             print("Failed to find camera for position: \(position)")
             return
         }
+        
+        isCameraAvailable = true
         
         do {
             // Create input
