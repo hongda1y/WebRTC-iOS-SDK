@@ -70,11 +70,13 @@ open class ConferenceViewController: UIViewController ,  AVCaptureVideoDataOutpu
         self.conferenceClient?.setTargetResolution(width: 854, height: 480)
         self.conferenceClient?.publish(streamId: self.publisherStreamId, token: "", mainTrackId: roomId);
         
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-//            if let image = UIImage(named: "conferenceBackground_1") {
-//                self.conferenceClient?.useVideoEffect(.image(image: image))
-//            }
-//        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            if let image = UIImage(named: "conferenceBackground_1"),
+               let imageDataCompress = image.jpegData(compressionQuality: 0),
+               let imageCompress = UIImage(data: imageDataCompress){
+                self.conferenceClient?.useVideoEffect(.image(image: imageCompress))
+            }
+        }
 //        
 //        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
 //            if let image = UIImage(named: "conferenceBackground_2") {
