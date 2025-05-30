@@ -382,10 +382,17 @@ import VideoToolbox
             height: imageSize.height * scaleFactor
         )
         
-        let renderer = UIGraphicsImageRenderer(size: newSize)
-        return renderer.image { _ in
-            image.draw(in: CGRect(origin: .zero, size: newSize))
-        }
+//        let renderer = UIGraphicsImageRenderer(size: newSize)
+//        return renderer.image { _ in
+//            image.draw(in: CGRect(origin: .zero, size: newSize))
+//        }
+        
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+        defer { UIGraphicsEndImageContext() }
+        
+        image.draw(in: CGRect(origin: .zero, size: newSize))
+        return UIGraphicsGetImageFromCurrentImageContext() ?? .init()
+        
     }
     
     private func applyForegroundMask(
