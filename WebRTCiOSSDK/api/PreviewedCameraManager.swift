@@ -54,7 +54,7 @@ public class PreviewedCameraManager: NSObject {
     }
     
     deinit {
-        stopCapture()
+//        stopCapture()
         cleanupResources()
         NotificationCenter.default.removeObserver(self)
     }
