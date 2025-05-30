@@ -140,8 +140,35 @@ public class PreviewedCameraManager: NSObject {
         captureSession.commitConfiguration()
     }
     
+//    private func cleanupResources() {
+//        backgroundEffect = nil
+//        previewLayer?.removeFromSuperlayer()
+//        previewLayer = nil
+//        
+//        // Clean up capture session
+//        captureSession.beginConfiguration()
+//        if let input = videoInput {
+//            captureSession.removeInput(input)
+//        }
+//        captureSession.removeOutput(videoDataOutput)
+//        captureSession.commitConfiguration()
+//    }
+    
+    // MEMORY LEAK FIX: Enhanced resource cleanup
     private func cleanupResources() {
+        // Clear background effect first
         backgroundEffect = nil
+        virtualBackground.clearBackgroundImage()
+        
+        // Wait for processing to complete
+        let semaphore = DispatchSemaphore(value: 0)
+        processingQueue.async {
+            semaphore.signal()
+        }
+        semaphore.wait()
+        
+        // Clean up preview layer
+        previewLayer?.flushAndRemoveImage()
         previewLayer?.removeFromSuperlayer()
         previewLayer = nil
         
@@ -152,6 +179,8 @@ public class PreviewedCameraManager: NSObject {
         }
         captureSession.removeOutput(videoDataOutput)
         captureSession.commitConfiguration()
+        
+        print("Resources cleaned up successfully")
     }
     
     // MARK: - Private Setup Methods
@@ -455,12 +484,12 @@ extension PreviewedCameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
                     
                     // Flush old samples if queue is getting too full
                     if previewLayer.isReadyForMoreMediaData {
-                        previewLayer.enqueue(maskedSampleBuffer)
+                        self?.enqueue(maskedSampleBuffer)
                     } else {
                         // If not ready, flush and try again
                         previewLayer.flushAndRemoveImage()
                         if previewLayer.isReadyForMoreMediaData {
-                            previewLayer.enqueue(maskedSampleBuffer)
+                            self?.enqueue(maskedSampleBuffer)
                         }
                     }
                 }
