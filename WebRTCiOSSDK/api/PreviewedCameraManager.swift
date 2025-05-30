@@ -61,7 +61,7 @@ public class PreviewedCameraManager: NSObject {
     public func startCapture() {
         guard !captureSession.isRunning else { return }
         
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+        DispatchQueue.global(qos: .background).async { [weak self] in
             self?.captureSession.startRunning()
         }
     }
@@ -71,7 +71,7 @@ public class PreviewedCameraManager: NSObject {
         
         captureSession.stopRunning()
         
-//        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+//        DispatchQueue.global(qos: .background).async { [weak self] in
 //            self?.captureSession.stopRunning()
 //        }
     }
@@ -150,28 +150,6 @@ public class PreviewedCameraManager: NSObject {
         }
         captureSession.removeOutput(videoDataOutput)
         captureSession.commitConfiguration()
-    }
-    
-    private func optimizeImageForBackground(_ image: UIImage) -> UIImage? {
-        // Resize background image to reasonable dimensions to save memory
-        let maxDimension: CGFloat = 1920 // Max dimension for background
-        let scale = min(maxDimension / image.size.width, maxDimension / image.size.height)
-        
-        if scale < 1.0 {
-            let newSize = CGSize(
-                width: image.size.width * scale,
-                height: image.size.height * scale
-            )
-            
-            UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
-            image.draw(in: CGRect(origin: .zero, size: newSize))
-            let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
-            UIGraphicsEndImageContext()
-            
-            return resizedImage
-        }
-        
-        return image
     }
     
     // MARK: - Private Setup Methods
@@ -434,19 +412,12 @@ extension PreviewedCameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
         sampleBuffer: CMSampleBuffer,
         orientation: AVCaptureVideoOrientation
     ) {
-        isProcessingFrame = true
-        
         guard let backgroundEffect else {
-            isProcessingFrame = false
-            
-            if #available(iOS 17.0, *) {
-                previewLayer?.sampleBufferRenderer.enqueue(sampleBuffer)
-            } else {
-                previewLayer?.enqueue(sampleBuffer)
-            }
-            
+            enqueue(sampleBuffer)
             return
         }
+        
+        isProcessingFrame = true
         
         var backgroundImage: UIImage?
         switch backgroundEffect {
@@ -489,6 +460,14 @@ extension PreviewedCameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
                     }
                 }
             }
+        }
+    }
+    
+    private func enqueue(_ sampleBuffer: CMSampleBuffer) {
+        if #available(iOS 17.0, *) {
+            previewLayer?.sampleBufferRenderer.enqueue(sampleBuffer)
+        } else {
+            previewLayer?.enqueue(sampleBuffer)
         }
     }
 }
