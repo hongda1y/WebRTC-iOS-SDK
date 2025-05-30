@@ -42,6 +42,9 @@ public class PreviewedCameraManager: NSObject {
     private var targetFrame: CGFloat
     private var preset: AVCaptureSession.Preset
     
+    // FIX: Add proper cleanup tracking
+    private var isCleanedUp = false
+    
     // MARK: - Initialization
     public init(preset: AVCaptureSession.Preset = .vga640x480, frame: CGFloat = 24) {
         self.preset = preset
@@ -54,7 +57,7 @@ public class PreviewedCameraManager: NSObject {
     }
     
     deinit {
-//        stopCapture()
+        stopCapture()
         cleanupResources()
         NotificationCenter.default.removeObserver(self)
     }
@@ -169,6 +172,9 @@ public class PreviewedCameraManager: NSObject {
     
     // MEMORY LEAK FIX: Enhanced resource cleanup
     private func cleanupResources() {
+        guard !isCleanedUp else { return }
+        isCleanedUp = true
+        
         // Clear background effect first
         backgroundEffect = nil
         virtualBackground.clearBackgroundImage()
@@ -427,6 +433,9 @@ extension PreviewedCameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
         didOutput sampleBuffer: CMSampleBuffer,
         from connection: AVCaptureConnection
     ) {
+        // FIX: Early exit if cleaned up
+        guard !isCleanedUp else { return }
+        
         // Frame rate limiting to prevent overwhelming the processor
         let currentTime = CACurrentMediaTime()
         if currentTime - lastFrameTime < targetFrameInterval {
@@ -451,7 +460,8 @@ extension PreviewedCameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
         
         // Process on separate queue to avoid blocking
         processingQueue.async { [weak self] in
-            self?.processFrameWithVirtualBackground(sampleBuffer: sampleBuffer, orientation: currentOrientation)
+            guard let self = self, !self.isCleanedUp else { return }
+            self.processFrameWithVirtualBackground(sampleBuffer: sampleBuffer, orientation: currentOrientation)
         }
     }
     
@@ -459,7 +469,7 @@ extension PreviewedCameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
         sampleBuffer: CMSampleBuffer,
         orientation: AVCaptureVideoOrientation
     ) {
-        guard let backgroundEffect else {
+        guard !isCleanedUp, let backgroundEffect else {
             enqueue(sampleBuffer)
             return
         }
@@ -483,7 +493,7 @@ extension PreviewedCameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
                 self?.isProcessingFrame = false
             }
             
-            guard let self else { return }
+            guard let self = self, !self.isCleanedUp else { return }
             
             if let error {
                 print("Virtual background processing error: \(error)")
@@ -511,10 +521,12 @@ extension PreviewedCameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
     }
     
     private func enqueue(_ sampleBuffer: CMSampleBuffer) {
+        guard !isCleanedUp, let previewLayer = previewLayer else { return }
+        
         if #available(iOS 17.0, *) {
-            previewLayer?.sampleBufferRenderer.enqueue(sampleBuffer)
+            previewLayer.sampleBufferRenderer.enqueue(sampleBuffer)
         } else {
-            previewLayer?.enqueue(sampleBuffer)
+            previewLayer.enqueue(sampleBuffer)
         }
     }
 }
