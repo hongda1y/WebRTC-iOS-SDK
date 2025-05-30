@@ -71,12 +71,25 @@ public class PreviewedCameraManager: NSObject {
     public func stopCapture() {
         guard captureSession.isRunning, isCameraAvailable else { return }
         
-        captureSession.stopRunning()
-        
-//        DispatchQueue.global(qos: .background).async { [weak self] in
-//            self?.captureSession.stopRunning()
-//        }
+        // FIX: Stop synchronously to ensure proper cleanup
+        if Thread.isMainThread {
+            DispatchQueue.global(qos: .background).sync { [weak self] in
+                self?.captureSession.stopRunning()
+            }
+        } else {
+            captureSession.stopRunning()
+        }
     }
+    
+//    public func stopCapture() {
+//        guard captureSession.isRunning, isCameraAvailable else { return }
+//        
+//        captureSession.stopRunning()
+//        
+////        DispatchQueue.global(qos: .background).async { [weak self] in
+////            self?.captureSession.stopRunning()
+////        }
+//    }
     
     public func setBackgroundEffect(_ videoEffect: VideoEffect?) {
         virtualBackground.clearBackgroundImage()
