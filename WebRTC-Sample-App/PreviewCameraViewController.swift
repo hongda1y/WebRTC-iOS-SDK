@@ -45,7 +45,7 @@ class PreviewCameraViewController: UIViewController {
     }
     
     private func setupCameraManager() {
-        cameraManager = PreviewedCameraManager()
+        cameraManager = PreviewedCameraManager(preset: .vga640x480, frame: 60)
     
         previewLayer = cameraManager!.getPreviewLayer()
         previewLayer?.bounds = view.bounds
@@ -109,8 +109,10 @@ class PreviewCameraViewController: UIViewController {
         cameraManager?.setBackgroundEffect(nil)
     }
     
+    var first: Bool = false
     @objc func onImageTap()  {
-        if let image = UIImage(named: "conferenceBackground") {
+        first.toggle()
+        if let image = UIImage(named: "conferenceBackground_\(first ? 1 : 2)") {
             cameraManager?.setBackgroundEffect(.image(image: image))
         }
     }

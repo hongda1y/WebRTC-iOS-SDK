@@ -320,6 +320,10 @@ import VideoToolbox
         }
     }
     
+    func clearBackgroundImage() {
+        backgroundCIImage = nil
+    }
+    
     // MARK: - Private Methods
     private func updateBackgroundImageIfNeeded(_ backgroundImage: UIImage?) {
         guard let backgroundImage = backgroundImage else {

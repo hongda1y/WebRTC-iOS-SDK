@@ -66,6 +66,7 @@ import os.log
     
     // MARK: - Public Methods
     @objc public func setBackgroundImage(image: UIImage?) {
+        virtualBackground.clearBackgroundImage()
         backgroundImage = image
         os_log("Background image updated", log: Self.logger, type: .debug)
     }

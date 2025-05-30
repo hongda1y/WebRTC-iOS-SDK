@@ -35,10 +35,17 @@ public class PreviewedCameraManager: NSObject {
     
     // Frame rate limiting
     private var lastFrameTime: CFTimeInterval = 0
-    private let targetFrameInterval: CFTimeInterval = 1.0 / 24.0 // 24 FPS
+    
+    private var targetFrameInterval: CFTimeInterval
+    private var targetFrame: CGFloat
+    private var preset: AVCaptureSession.Preset
     
     // MARK: - Initialization
-    public override init() {
+    public init(preset: AVCaptureSession.Preset = .vga640x480, frame: CGFloat = 24) {
+        self.preset = preset
+        self.targetFrameInterval = 1.0 / frame
+        self.targetFrame = frame
+        
         super.init()
         setupCaptureSession()
         setupMemoryWarningObserver()
@@ -70,6 +77,7 @@ public class PreviewedCameraManager: NSObject {
     }
     
     public func setBackgroundEffect(_ videoEffect: VideoEffect?) {
+        virtualBackground.clearBackgroundImage()
         self.backgroundEffect = videoEffect
     }
     
@@ -172,7 +180,9 @@ public class PreviewedCameraManager: NSObject {
         
         // Configure session preset - start with lower quality to save memory
         
-        if captureSession.canSetSessionPreset(.vga640x480) {
+        if captureSession.canSetSessionPreset(preset) {
+            captureSession.sessionPreset = preset
+        } else if captureSession.canSetSessionPreset(.vga640x480) {
             captureSession.sessionPreset = .vga640x480
         } else if captureSession.canSetSessionPreset(.hd1280x720) {
             captureSession.sessionPreset = .hd1280x720
@@ -294,21 +304,74 @@ public class PreviewedCameraManager: NSObject {
         return discoverySession.devices.first
     }
     
+//    private func configureFrameRate(for device: AVCaptureDevice) {
+//        // Use more conservative frame rate to reduce memory pressure
+//        
+//        for format in device.formats {
+//            let ranges = format.videoSupportedFrameRateRanges
+//            
+//            for range in ranges {
+//                if range.minFrameRate <= targetFrame && range.maxFrameRate >= targetFrame {
+//                    device.activeFormat = format
+//                    device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: CMTimeScale(targetFrame))
+//                    device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: CMTimeScale(targetFrame))
+//                    return
+//                }
+//            }
+//        }
+//    }
+    
     private func configureFrameRate(for device: AVCaptureDevice) {
-        // Use more conservative frame rate to reduce memory pressure
-        let targetFPS: Double = 24 // Reduced from 30 to save memory
-        
-        for format in device.formats {
-            let ranges = format.videoSupportedFrameRateRanges
+        do {
+            try device.lockForConfiguration()
             
-            for range in ranges {
-                if range.minFrameRate <= targetFPS && range.maxFrameRate >= targetFPS {
-                    device.activeFormat = format
-                    device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: CMTimeScale(targetFPS))
-                    device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: CMTimeScale(targetFPS))
+            // Since you're using AVCaptureSession preset, we only need to configure frame rate
+            // The preset already determines the resolution and format
+            
+            // Find a frame rate range that supports our target
+            for range in device.activeFormat.videoSupportedFrameRateRanges {
+                if range.minFrameRate <= targetFrame && range.maxFrameRate >= targetFrame {
+                    device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: CMTimeScale(targetFrame))
+                    device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: CMTimeScale(targetFrame))
+                    
+                    device.unlockForConfiguration()
+                    
+                    // Log current format for verification
+                    let dimensions = CMVideoFormatDescriptionGetDimensions(device.activeFormat.formatDescription)
+                    print("Frame rate configured: \(dimensions.width)x\(dimensions.height) at \(targetFrame)fps")
                     return
                 }
             }
+            
+            // If target frame rate not supported, find closest supported rate
+            var closestRange: AVFrameRateRange?
+            var smallestDifference = Double.infinity
+            
+            for range in device.activeFormat.videoSupportedFrameRateRanges {
+                let difference = min(abs(range.minFrameRate - targetFrame), abs(range.maxFrameRate - targetFrame))
+                if difference < smallestDifference {
+                    smallestDifference = difference
+                    closestRange = range
+                }
+            }
+            
+            if let range = closestRange {
+                // Use the closest supported frame rate
+                let actualFrameRate = (targetFrame < range.minFrameRate) ? range.minFrameRate :
+                                     (targetFrame > range.maxFrameRate) ? range.maxFrameRate : targetFrame
+                
+                device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: CMTimeScale(actualFrameRate))
+                device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: CMTimeScale(actualFrameRate))
+                
+                print("Using closest supported frame rate: \(actualFrameRate)fps (target was \(targetFrame)fps)")
+            } else {
+                print("Warning: No supported frame rate ranges found")
+            }
+            
+            device.unlockForConfiguration()
+            
+        } catch {
+            print("Error configuring frame rate: \(error)")
         }
     }
     
