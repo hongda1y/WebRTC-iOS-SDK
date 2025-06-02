@@ -75,9 +75,17 @@ import VideoToolbox
     
     deinit {
         // MEMORY MANAGEMENT: Clean up resources
+        print("Release all resource...")
+        
+        if let pool = pixelBufferPool {
+            CVPixelBufferPoolFlush(pool, [])
+        }
+        
         backgroundCIImage = nil
         cachedBlurredBackground = nil
         pixelBufferPool = nil
+        
+        processingGroup.wait()
     }
     
     // MEMORY MANAGEMENT: Throttle processing
@@ -118,8 +126,13 @@ import VideoToolbox
             return
         }
         
+        processingGroup.enter()
+        
         processingQueue.async { [weak self] in
-            defer { self?.decrementProcessingCount() }
+            defer {
+                self?.decrementProcessingCount()
+                self?.processingGroup.leave()
+            }
             
             guard let self = self else { return }
             
@@ -387,12 +400,15 @@ import VideoToolbox
 //            image.draw(in: CGRect(origin: .zero, size: newSize))
 //        }
         
-        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
-        defer { UIGraphicsEndImageContext() }
+        // Use more memory-efficient image resizing
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1.0 // Don't use device scale since we already calculated it
+        format.opaque = true // Optimize for opaque images
         
-        image.draw(in: CGRect(origin: .zero, size: newSize))
-        return UIGraphicsGetImageFromCurrentImageContext() ?? .init()
-        
+        let renderer = UIGraphicsImageRenderer(size: newSize, format: format)
+        return renderer.image { context in
+            image.draw(in: CGRect(origin: .zero, size: newSize))
+        }
     }
     
     private func applyForegroundMask(
@@ -467,6 +483,10 @@ import VideoToolbox
     }
     
     private func createPixelBufferPool(size: CGSize) {
+        if let oldPool = pixelBufferPool {
+            CVPixelBufferPoolFlush(oldPool, [])
+        }
+        
         let pixelBufferAttributes: [String: Any] = [
             kCVPixelBufferCGImageCompatibilityKey as String: true,
             kCVPixelBufferCGBitmapContextCompatibilityKey as String: true,
@@ -479,7 +499,7 @@ import VideoToolbox
         
         let poolAttributes: [String: Any] = [
             kCVPixelBufferPoolMinimumBufferCountKey as String: 3,
-            kCVPixelBufferPoolMaximumBufferAgeKey as String: 0
+            kCVPixelBufferPoolMaximumBufferAgeKey as String: 10
         ]
         
         var newPool: CVPixelBufferPool?
