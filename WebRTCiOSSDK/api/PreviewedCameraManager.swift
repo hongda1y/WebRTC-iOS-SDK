@@ -14,7 +14,7 @@ public class PreviewedCameraManager: NSObject {
     // MARK: - Properties
     private let captureSession = AVCaptureSession()
     private let videoDataOutput = AVCaptureVideoDataOutput()
-    private let captureQueue = DispatchQueue(label: "com.camera.capture")
+    private let captureQueue = DispatchQueue(label: "com.camera.capture", qos: .userInitiated)
     
     private var videoInput: AVCaptureDeviceInput?
     private var previewLayer: AVSampleBufferDisplayLayer?
@@ -29,7 +29,7 @@ public class PreviewedCameraManager: NSObject {
     
     // Memory management
     private var isProcessingFrame = false
-//    private let processingQueue = DispatchQueue(label: "com.camera.processing", qos: .userInitiated)
+    private let processingQueue = DispatchQueue(label: "com.camera.processing", qos: .userInitiated)
     private var frameDropCount = 0
     private let maxConsecutiveDrops = 5
     
@@ -481,12 +481,7 @@ extension PreviewedCameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
         let currentOrientation = connection.videoOrientation
         
         // Process on separate queue to avoid blocking
-//        processingQueue.async { [weak self] in
-//            guard let self = self, !self.isCleanedUp else { return }
-//            self.processFrameWithVirtualBackground(sampleBuffer: sampleBuffer, orientation: currentOrientation)
-//        }
-        
-        DispatchQueue.global(qos: .background).async {  [weak self] in
+        processingQueue.async { [weak self] in
             guard let self = self, !self.isCleanedUp else { return }
             self.processFrameWithVirtualBackground(sampleBuffer: sampleBuffer, orientation: currentOrientation)
         }

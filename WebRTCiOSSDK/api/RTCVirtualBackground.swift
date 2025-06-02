@@ -18,7 +18,7 @@ import VideoToolbox
     public typealias ForegroundMaskAVCaptureCompletion = (CMSampleBuffer?, Error?) -> Void
     
     // MARK: - Properties
-//    private let processingQueue = DispatchQueue(label: "com.webrtc.virtualbackground", qos: .userInitiated)
+    private let processingQueue = DispatchQueue(label: "com.webrtc.virtualbackground", qos: .userInitiated)
     private let ciContext: CIContext
     private var backgroundCIImage: CIImage?
     private var cachedBlurredBackground: CIImage?
@@ -128,14 +128,18 @@ import VideoToolbox
         
 //        processingGroup.enter()
         
-//        processingQueue.async { [weak self] in
-        DispatchQueue.global(qos: .background).async { [weak self] in
+        processingQueue.async { [weak self] in
+//        DispatchQueue.global(qos: .background).async { [weak self] in
             defer {
                 self?.decrementProcessingCount()
 //                self?.processingGroup.leave()
             }
             
             guard let self = self else { return }
+            
+            
+            completion(sampleBuffer, nil)
+            return
             
             // Extract pixel buffer from sample buffer
             guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
@@ -270,8 +274,8 @@ import VideoToolbox
             return
         }
         
-        DispatchQueue.global(qos: .background).async { [weak self] in
-//        processingQueue.async { [weak self] in
+//        DispatchQueue.global(qos: .background).async { [weak self] in
+        processingQueue.async { [weak self] in
             defer { self?.decrementProcessingCount() }
             
             guard let self = self else { return }
