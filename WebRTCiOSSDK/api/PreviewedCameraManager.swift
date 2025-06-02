@@ -186,20 +186,8 @@ public class PreviewedCameraManager: NSObject {
         backgroundEffect = nil
         virtualBackground.clearBackgroundImage()
         
-        // Wait for all processing to complete with timeout
-        let semaphore = DispatchSemaphore(value: 0)
-        var completed = false
-        
-        processingQueue.async {
-            completed = true
-            semaphore.signal()
-        }
-        
-        // Wait with timeout to avoid indefinite blocking
-        let timeout = DispatchTime.now() + .seconds(2)
-        if semaphore.wait(timeout: timeout) == .timedOut {
-            print("Warning: Processing queue cleanup timed out")
-        }
+        processingQueue.suspend()
+        captureQueue.suspend()
         
         // Clean up preview layer on main thread
         DispatchQueue.main.sync {
