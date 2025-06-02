@@ -119,12 +119,12 @@ import VideoToolbox
 //        }
         
         // Check iOS version availability upfront
-//        guard #available(iOS 17.0, *) else {
-//            decrementProcessingCount()
-//            completion(nil, NSError(domain: "RTCVirtualBackground", code: -1,
-//                                  userInfo: [NSLocalizedDescriptionKey: "Vision framework not available"]))
-//            return
-//        }
+        guard #available(iOS 17.0, *) else {
+            decrementProcessingCount()
+            completion(nil, NSError(domain: "RTCVirtualBackground", code: -1,
+                                  userInfo: [NSLocalizedDescriptionKey: "Vision framework not available"]))
+            return
+        }
         
 //        processingGroup.enter()
         
