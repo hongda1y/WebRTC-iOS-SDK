@@ -112,19 +112,19 @@ import VideoToolbox
         completion: @escaping ForegroundMaskAVCaptureCompletion
     ) {
         // MEMORY MANAGEMENT: Throttle processing
-        guard canProcessFrame() else {
-            completion(nil, NSError(domain: "RTCVirtualBackground", code: -4,
-                                  userInfo: [NSLocalizedDescriptionKey: "Processing throttled"]))
-            return
-        }
+//        guard canProcessFrame() else {
+//            completion(nil, NSError(domain: "RTCVirtualBackground", code: -4,
+//                                  userInfo: [NSLocalizedDescriptionKey: "Processing throttled"]))
+//            return
+//        }
         
         // Check iOS version availability upfront
-        guard #available(iOS 17.0, *) else {
-            decrementProcessingCount()
-            completion(nil, NSError(domain: "RTCVirtualBackground", code: -1,
-                                  userInfo: [NSLocalizedDescriptionKey: "Vision framework not available"]))
-            return
-        }
+//        guard #available(iOS 17.0, *) else {
+//            decrementProcessingCount()
+//            completion(nil, NSError(domain: "RTCVirtualBackground", code: -1,
+//                                  userInfo: [NSLocalizedDescriptionKey: "Vision framework not available"]))
+//            return
+//        }
         
 //        processingGroup.enter()
         
@@ -136,10 +136,6 @@ import VideoToolbox
             }
             
             guard let self = self else { return }
-            
-            
-            completion(sampleBuffer, nil)
-            return
             
             // Extract pixel buffer from sample buffer
             guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
