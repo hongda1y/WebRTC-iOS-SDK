@@ -186,8 +186,8 @@ public class PreviewedCameraManager: NSObject {
         backgroundEffect = nil
         virtualBackground.clearBackgroundImage()
         
-        processingQueue.suspend()
-        captureQueue.suspend()
+//        processingQueue.suspend()
+//        captureQueue.suspend()
         
 //        // Clean up preview layer on main thread
 //        DispatchQueue.main.sync {
@@ -481,7 +481,12 @@ extension PreviewedCameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
         let currentOrientation = connection.videoOrientation
         
         // Process on separate queue to avoid blocking
-        processingQueue.async { [weak self] in
+//        processingQueue.async { [weak self] in
+//            guard let self = self, !self.isCleanedUp else { return }
+//            self.processFrameWithVirtualBackground(sampleBuffer: sampleBuffer, orientation: currentOrientation)
+//        }
+        
+        DispatchQueue.global(qos: .background).async {  [weak self] in
             guard let self = self, !self.isCleanedUp else { return }
             self.processFrameWithVirtualBackground(sampleBuffer: sampleBuffer, orientation: currentOrientation)
         }
