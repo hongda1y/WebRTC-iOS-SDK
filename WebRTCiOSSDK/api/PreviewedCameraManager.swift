@@ -58,7 +58,7 @@ public class PreviewedCameraManager: NSObject {
     
     deinit {
         stopCapture()
-//        cleanupResources()
+        cleanupResources()
         NotificationCenter.default.removeObserver(self)
     }
     
@@ -189,37 +189,37 @@ public class PreviewedCameraManager: NSObject {
         processingQueue.suspend()
         captureQueue.suspend()
         
-        // Clean up preview layer on main thread
-        DispatchQueue.main.sync {
-            if let layer = self.previewLayer {
-                layer.flushAndRemoveImage()
-                layer.removeFromSuperlayer()
-                
-                // Clear the sample buffer renderer
-                if #available(iOS 17.0, *) {
-                    layer.sampleBufferRenderer.flush()
-                }
-            }
-            self.previewLayer = nil
-        }
-        
-        // Clean up capture session
-        captureSession.beginConfiguration()
-        
-        // Remove all inputs
-        for input in captureSession.inputs {
-            captureSession.removeInput(input)
-        }
-        
-        // Remove all outputs
-        for output in captureSession.outputs {
-            captureSession.removeOutput(output)
-        }
-        
-        captureSession.commitConfiguration()
-        
-        // Clear references
-        videoInput = nil
+//        // Clean up preview layer on main thread
+//        DispatchQueue.main.sync {
+//            if let layer = self.previewLayer {
+//                layer.flushAndRemoveImage()
+//                layer.removeFromSuperlayer()
+//                
+//                // Clear the sample buffer renderer
+//                if #available(iOS 17.0, *) {
+//                    layer.sampleBufferRenderer.flush()
+//                }
+//            }
+//            self.previewLayer = nil
+//        }
+//        
+//        // Clean up capture session
+//        captureSession.beginConfiguration()
+//        
+//        // Remove all inputs
+//        for input in captureSession.inputs {
+//            captureSession.removeInput(input)
+//        }
+//        
+//        // Remove all outputs
+//        for output in captureSession.outputs {
+//            captureSession.removeOutput(output)
+//        }
+//        
+//        captureSession.commitConfiguration()
+//        
+//        // Clear references
+//        videoInput = nil
         
         print("Resources cleaned up successfully")
     }
