@@ -18,7 +18,7 @@ import VideoToolbox
     public typealias ForegroundMaskAVCaptureCompletion = (CMSampleBuffer?, Error?) -> Void
     
     // MARK: - Properties
-    private let processingQueue = DispatchQueue(label: "com.webrtc.virtualbackground", qos: .userInitiated)
+//    private let processingQueue = DispatchQueue(label: "com.webrtc.virtualbackground", qos: .userInitiated)
     private let ciContext: CIContext
     private var backgroundCIImage: CIImage?
     private var cachedBlurredBackground: CIImage?
@@ -34,7 +34,7 @@ import VideoToolbox
     private var poolFrameSize: CGSize = .zero
     
     // MEMORY MANAGEMENT: Limit concurrent processing
-    private let processingGroup = DispatchGroup()
+//    private let processingGroup = DispatchGroup()
     private let maxConcurrentProcessing = 2
     private var currentProcessingCount = 0
     private let countLock = NSLock()
@@ -85,7 +85,7 @@ import VideoToolbox
         cachedBlurredBackground = nil
         pixelBufferPool = nil
         
-        processingGroup.wait()
+//        processingGroup.wait()
     }
     
     // MEMORY MANAGEMENT: Throttle processing
@@ -126,12 +126,13 @@ import VideoToolbox
             return
         }
         
-        processingGroup.enter()
+//        processingGroup.enter()
         
-        processingQueue.async { [weak self] in
+//        processingQueue.async { [weak self] in
+        DispatchQueue.global(qos: .background).async { [weak self] in
             defer {
                 self?.decrementProcessingCount()
-                self?.processingGroup.leave()
+//                self?.processingGroup.leave()
             }
             
             guard let self = self else { return }
@@ -269,7 +270,8 @@ import VideoToolbox
             return
         }
         
-        processingQueue.async { [weak self] in
+        DispatchQueue.global(qos: .background).async { [weak self] in
+//        processingQueue.async { [weak self] in
             defer { self?.decrementProcessingCount() }
             
             guard let self = self else { return }

@@ -14,7 +14,7 @@ public class PreviewedCameraManager: NSObject {
     // MARK: - Properties
     private let captureSession = AVCaptureSession()
     private let videoDataOutput = AVCaptureVideoDataOutput()
-    private let captureQueue = DispatchQueue(label: "com.camera.capture", qos: .userInitiated)
+    private let captureQueue = DispatchQueue(label: "com.camera.capture")
     
     private var videoInput: AVCaptureDeviceInput?
     private var previewLayer: AVSampleBufferDisplayLayer?
@@ -29,7 +29,7 @@ public class PreviewedCameraManager: NSObject {
     
     // Memory management
     private var isProcessingFrame = false
-    private let processingQueue = DispatchQueue(label: "com.camera.processing", qos: .userInitiated)
+//    private let processingQueue = DispatchQueue(label: "com.camera.processing", qos: .userInitiated)
     private var frameDropCount = 0
     private let maxConsecutiveDrops = 5
     
