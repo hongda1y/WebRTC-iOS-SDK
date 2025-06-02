@@ -170,34 +170,68 @@ public class PreviewedCameraManager: NSObject {
 //        captureSession.commitConfiguration()
 //    }
     
-    // MEMORY LEAK FIX: Enhanced resource cleanup
+    // ENHANCED RESOURCE CLEANUP - Fixed version
     private func cleanupResources() {
         guard !isCleanedUp else { return }
+        
+        print("Starting resource cleanup...")
         isCleanedUp = true
+        
+        // Stop capture session first
+        if captureSession.isRunning {
+            captureSession.stopRunning()
+        }
         
         // Clear background effect first
         backgroundEffect = nil
         virtualBackground.clearBackgroundImage()
         
-        // Wait for processing to complete
+        // Wait for all processing to complete with timeout
         let semaphore = DispatchSemaphore(value: 0)
+        var completed = false
+        
         processingQueue.async {
+            completed = true
             semaphore.signal()
         }
-        semaphore.wait()
         
-        // Clean up preview layer
-        previewLayer?.flushAndRemoveImage()
-        previewLayer?.removeFromSuperlayer()
-        previewLayer = nil
+        // Wait with timeout to avoid indefinite blocking
+        let timeout = DispatchTime.now() + .seconds(2)
+        if semaphore.wait(timeout: timeout) == .timedOut {
+            print("Warning: Processing queue cleanup timed out")
+        }
+        
+        // Clean up preview layer on main thread
+        DispatchQueue.main.sync {
+            if let layer = self.previewLayer {
+                layer.flushAndRemoveImage()
+                layer.removeFromSuperlayer()
+                
+                // Clear the sample buffer renderer
+                if #available(iOS 17.0, *) {
+                    layer.sampleBufferRenderer.flush()
+                }
+            }
+            self.previewLayer = nil
+        }
         
         // Clean up capture session
         captureSession.beginConfiguration()
-        if let input = videoInput {
+        
+        // Remove all inputs
+        for input in captureSession.inputs {
             captureSession.removeInput(input)
         }
-        captureSession.removeOutput(videoDataOutput)
+        
+        // Remove all outputs
+        for output in captureSession.outputs {
+            captureSession.removeOutput(output)
+        }
+        
         captureSession.commitConfiguration()
+        
+        // Clear references
+        videoInput = nil
         
         print("Resources cleaned up successfully")
     }
