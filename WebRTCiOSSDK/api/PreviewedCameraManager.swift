@@ -478,7 +478,7 @@ extension PreviewedCameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
             guard let self, !isCleanedUp else { return }
             
             if let error {
-                print("Virtual background processing error: \(error)")
+                enqueue(sampleBuffer)
                 return
             }
             
