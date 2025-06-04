@@ -12,10 +12,27 @@ import WebRTCiOSSDK
 import Photos
 
 class ParentViewController: UIViewController {
+    let cameraView = UIView()
+    
+    var cameraManager: PreviewedCameraManager?
+    var previewLayer: AVSampleBufferDisplayLayer?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         setupButton()
+        setupCameraView()
+    }
+    
+    override func viewIsAppearing(_ animated: Bool) {
+        super.viewIsAppearing(animated)
+        
+        setupCameraManager()
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        previewLayer?.frame = cameraView.bounds
     }
     
     private func setupButton() {
@@ -41,9 +58,32 @@ class ParentViewController: UIViewController {
         ])
     }
     
+    private func setupCameraManager() {
+        cameraManager = PreviewedCameraManager(preset: .vga640x480, frame: 15)
+    
+        previewLayer = cameraManager!.getPreviewLayer()
+        previewLayer?.bounds = view.bounds
+        cameraView.layer.addSublayer(previewLayer!)
+        
+        cameraManager?.startCapture()
+    }
+    
+    private func setupCameraView() {
+        cameraView.layer.cornerRadius = 10
+        cameraView.clipsToBounds = true
+        view.addSubview(cameraView)
+        
+        cameraView.translatesAutoresizingMaskIntoConstraints = false
+        cameraView.widthAnchor.constraint(equalToConstant: 150).isActive = true
+        cameraView.heightAnchor.constraint(equalToConstant: 230).isActive = true
+        cameraView.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
+        cameraView.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -200).isActive = true
+    }
+    
     @objc private func buttonTapped() {
         let secondController = PreviewCameraViewController()
-        secondController.modalPresentationStyle = .overCurrentContext
+        secondController.modalPresentationStyle = .overFullScreen
+        secondController.modalTransitionStyle = .crossDissolve
         present(secondController, animated: true)
     }
 }

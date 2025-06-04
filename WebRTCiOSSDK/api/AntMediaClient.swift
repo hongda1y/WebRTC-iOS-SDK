@@ -1347,6 +1347,10 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         webSocket?.write(string: command.json)
     }
     
+    public func writeWebsocketMessage(_ jsonString: String) {
+        webSocket?.write(string: jsonString)
+    }
+    
     /// Get track list in a room
     /// It will return a list of StreamID in `onGetTrackList` delegate
     public func getTrackLists(mainTrackID: String) {
