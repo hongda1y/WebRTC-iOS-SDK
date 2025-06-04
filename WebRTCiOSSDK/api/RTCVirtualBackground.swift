@@ -12,7 +12,7 @@ import WebRTC
 import CoreImage
 import VideoToolbox
 
-@objc public class RTCVirtualBackground: NSObject {
+public class RTCVirtualBackground: NSObject {
     
     public typealias ForegroundMaskCompletion = (RTCVideoFrame?, Error?) -> Void
     public typealias ForegroundMaskAVCaptureCompletion = (CMSampleBuffer?, Error?) -> Void
@@ -34,19 +34,19 @@ import VideoToolbox
     private var poolFrameSize: CGSize = .zero
     
     // MEMORY MANAGEMENT: Limit concurrent processing
-//    private let processingGroup = DispatchGroup()
+    //    private let processingGroup = DispatchGroup()
     private let maxConcurrentProcessing = 2
     private var currentProcessingCount = 0
     private let countLock = NSLock()
     
-    private lazy var personMaskRequest: Any? = {
+    private func createPersonMaskRequest() -> Any? {
         if #available(iOS 17.0, *) {
             let request = VNGeneratePersonInstanceMaskRequest()
             request.revision = VNGeneratePersonInstanceMaskRequestRevision1
             return request
         }
         return nil
-    }()
+    }
     
     // MARK: - Initialization
     public init(blurRadius: Float = 10) {
@@ -78,14 +78,12 @@ import VideoToolbox
         print("Release all resource...")
         
         if let pool = pixelBufferPool {
-            CVPixelBufferPoolFlush(pool, [])
+            CVPixelBufferPoolFlush(pool, CVPixelBufferPoolFlushFlags.excessBuffers)
         }
         
         backgroundCIImage = nil
         cachedBlurredBackground = nil
         pixelBufferPool = nil
-        
-//        processingGroup.wait()
     }
     
     // MEMORY MANAGEMENT: Throttle processing
@@ -109,58 +107,50 @@ import VideoToolbox
     public func processAVCaptrueForegroundMask(
         from sampleBuffer: CMSampleBuffer,
         backgroundImage: UIImage?,
+        size: CGSize? = nil,
         completion: @escaping ForegroundMaskAVCaptureCompletion
     ) {
-        // MEMORY MANAGEMENT: Throttle processing
-//        guard canProcessFrame() else {
-//            completion(nil, NSError(domain: "RTCVirtualBackground", code: -4,
-//                                  userInfo: [NSLocalizedDescriptionKey: "Processing throttled"]))
-//            return
-//        }
-        
-        // Check iOS version availability upfront
-        guard #available(iOS 17.0, *) else {
-            decrementProcessingCount()
-            completion(nil, NSError(domain: "RTCVirtualBackground", code: -1,
-                                  userInfo: [NSLocalizedDescriptionKey: "Vision framework not available"]))
+        guard canProcessFrame() else {
+            completion(nil, NSError(domain: "RTCVirtualBackground", code: -4,
+                                    userInfo: [NSLocalizedDescriptionKey: "Processing throttled"]))
             return
         }
         
-//        processingGroup.enter()
+        guard #available(iOS 17.0, *) else {
+            decrementProcessingCount()
+            completion(nil, NSError(domain: "RTCVirtualBackground", code: -1,
+                                    userInfo: [NSLocalizedDescriptionKey: "Vision framework not available"]))
+            return
+        }
         
         processingQueue.async { [weak self] in
-//        DispatchQueue.global(qos: .background).async { [weak self] in
-            defer {
-                self?.decrementProcessingCount()
-//                self?.processingGroup.leave()
-            }
+            defer { self?.decrementProcessingCount() }
             
-            guard let self = self else { return }
+            guard let self else { return }
             
             // Extract pixel buffer from sample buffer
             guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
-                DispatchQueue.main.async {
-                    completion(nil, NSError(domain: "RTCVirtualBackground", code: -2,
-                                          userInfo: [NSLocalizedDescriptionKey: "Failed to extract CVPixelBuffer from CMSampleBuffer"]))
-                }
+                completion(nil, NSError(domain: "RTCVirtualBackground", code: -2,
+                                        userInfo: [NSLocalizedDescriptionKey: "Fa iled to extract CVPixelBuffer from CMSampleBuffer"]))
                 return
             }
             
             // Check if we should process this frame (skip if too frequent)
             let frameSize = CGSize(width: CVPixelBufferGetWidth(pixelBuffer),
-                                 height: CVPixelBufferGetHeight(pixelBuffer))
+                                   height: CVPixelBufferGetHeight(pixelBuffer))
             
             // Cache background image if changed
-            self.updateBackgroundImageIfNeeded(backgroundImage)
+            updateBackgroundImageIfNeeded(backgroundImage, size: size)
             
             // Get orientation info
             let videoOrientation = AVCaptureVideoOrientation.portrait
             
-            let inputFrameImage = CIImage(cvPixelBuffer: pixelBuffer)
-            let handler = VNImageRequestHandler(ciImage: inputFrameImage, options: [:])
+//            let inputFrameImage = CIImage(cvPixelBuffer: pixelBuffer)
+//            let handler = VNImageRequestHandler(ciImage: inputFrameImage, options: [:])
+            let handler = VNImageRequestHandler(cmSampleBuffer: sampleBuffer)
             
             do {
-                guard let personMaskRequest = personMaskRequest as? VNGeneratePersonInstanceMaskRequest else {
+                guard let personMaskRequest = createPersonMaskRequest() as? VNGeneratePersonInstanceMaskRequest else {
                     return
                 }
                 
@@ -178,27 +168,22 @@ import VideoToolbox
                     )
                 }
                 
-                self.applyForegroundMaskForAVCapture(
+                let maskedSampleBuffer = applyForegroundMaskForAVCapture(
                     to: maskedImage,
                     fullPixelBuffer: pixelBuffer,
                     originalSampleBuffer: sampleBuffer,
                     videoOrientation: videoOrientation,
-                    frameSize: frameSize,
-                    completion: { maskedSampleBuffer, error in
-                        DispatchQueue.main.async {
-                            if let maskedSampleBuffer {
-                                completion(maskedSampleBuffer, nil)
-                            } else {
-                                completion(nil, error)
-                            }
-                        }
-                    }
+                    frameSize: frameSize
                 )
                 
-            } catch {
-                DispatchQueue.main.async {
-                    completion(nil, error)
+                if let maskedSampleBuffer {
+                    completion(maskedSampleBuffer, nil)
+                } else {
+                    completion(nil, nil)
                 }
+                
+            } catch {
+                completion(nil, error)
             }
         }
     }
@@ -208,9 +193,8 @@ import VideoToolbox
         fullPixelBuffer: CVPixelBuffer,
         originalSampleBuffer: CMSampleBuffer,
         videoOrientation: AVCaptureVideoOrientation,
-        frameSize: CGSize,
-        completion: @escaping (CMSampleBuffer?, Error?) -> Void
-    ) {
+        frameSize: CGSize
+    ) -> CMSampleBuffer? {
         // Create CIImage from the masked foreground
         var maskedCIImage: CIImage?
         if let maskedPixelBuffer {
@@ -219,9 +203,9 @@ import VideoToolbox
         
         let finalCompositeImage: CIImage
         
-        if let backgroundCIImage = self.backgroundCIImage {
+        if let backgroundCIImage = backgroundCIImage {
             // Use custom background
-            finalCompositeImage = self.compositeWithBackgroundForAVCapture(
+            finalCompositeImage = compositeWithBackgroundForAVCapture(
                 foreground: maskedCIImage,
                 background: backgroundCIImage,
                 size: frameSize,
@@ -229,7 +213,7 @@ import VideoToolbox
             )
         } else {
             // Use blurred background
-            finalCompositeImage = self.compositeWithBlurredBackground(
+            finalCompositeImage = compositeWithBlurredBackground(
                 foreground: maskedCIImage,
                 fullPixelBuffer: fullPixelBuffer,
                 frameSize: frameSize
@@ -237,15 +221,11 @@ import VideoToolbox
         }
         
         // MEMORY MANAGEMENT: Use pixel buffer pool
-        self.convertCIImageToPixelBufferWithPool(finalCompositeImage, size: frameSize) { [weak self] pixelBuffer in
-            if let pixelBuffer {
-                let sampleBuffer = self?.createSampleBufferFrom(pixelBuffer: pixelBuffer,
-                                                                sampleBuffer: originalSampleBuffer)
-                completion(sampleBuffer, nil)
-            } else {
-                completion(nil, NSError(domain: "RTCVirtualBackground", code: -5,
-                                      userInfo: [NSLocalizedDescriptionKey: "Failed to create output pixel buffer"]))
-            }
+        if let pixelBuffer = convertCIImageToPixelBufferWithPool(finalCompositeImage, size: frameSize) {
+            return createSampleBufferFrom(pixelBuffer: pixelBuffer,
+                                          sampleBuffer: originalSampleBuffer)
+        } else {
+            return nil
         }
     }
     
@@ -258,7 +238,7 @@ import VideoToolbox
         // MEMORY MANAGEMENT: Throttle processing
         guard canProcessFrame() else {
             completion(nil, NSError(domain: "RTCVirtualBackground", code: -4,
-                                  userInfo: [NSLocalizedDescriptionKey: "Processing throttled"]))
+                                    userInfo: [NSLocalizedDescriptionKey: "Processing throttled"]))
             return
         }
         
@@ -266,32 +246,28 @@ import VideoToolbox
         guard #available(iOS 17.0, *) else {
             decrementProcessingCount()
             completion(nil, NSError(domain: "RTCVirtualBackground", code: -1,
-                                  userInfo: [NSLocalizedDescriptionKey: "Vision framework not available"]))
+                                    userInfo: [NSLocalizedDescriptionKey: "Vision framework not available"]))
             return
         }
         
-//        DispatchQueue.global(qos: .background).async { [weak self] in
         processingQueue.async { [weak self] in
             defer { self?.decrementProcessingCount() }
             
-            guard let self = self else { return }
+            guard let self else { return }
             
-            guard let pixelBuffer = self.convertRTCVideoFrameToPixelBuffer(videoFrame) else {
-                DispatchQueue.main.async {
-                    completion(nil, NSError(domain: "RTCVirtualBackground", code: -2,
-                                          userInfo: [NSLocalizedDescriptionKey: "Failed to convert RTCVideoFrame to CVPixelBuffer"]))
-                }
+            guard let pixelBuffer = convertRTCVideoFrameToPixelBuffer(videoFrame) else {
+                completion(nil, NSError(domain: "RTCVirtualBackground", code: -2,
+                                        userInfo: [NSLocalizedDescriptionKey: "Failed to convert RTCVideoFrame to CVPixelBuffer"]))
                 return
             }
             
             // Cache background image if changed
-            self.updateBackgroundImageIfNeeded(backgroundImage)
+            updateBackgroundImageIfNeeded(backgroundImage)
             
-            let inputFrameImage = CIImage(cvPixelBuffer: pixelBuffer)
-            let handler = VNImageRequestHandler(ciImage: inputFrameImage, options: [:])
+            let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer)
             
             do {
-                guard let personMaskRequest = personMaskRequest as? VNGeneratePersonInstanceMaskRequest else {
+                guard let personMaskRequest = createPersonMaskRequest() as? VNGeneratePersonInstanceMaskRequest else {
                     return
                 }
                 
@@ -309,14 +285,15 @@ import VideoToolbox
                     )
                 }
                 
-                self.applyForegroundMask(
+                applyForegroundMask(
                     to: maskedImage,
                     fullPixelBuffer: pixelBuffer,
                     rotation: videoFrame.rotation,
-                    completion: { maskedPixelBuffer, error in
+                    completion: { [weak self] maskedPixelBuffer, error in
+                        
                         DispatchQueue.main.async {
                             if let maskedPixelBuffer = maskedPixelBuffer {
-                                let frameProcessed = self.convertPixelBufferToRTCVideoFrame(
+                                let frameProcessed = self?.convertPixelBufferToRTCVideoFrame(
                                     maskedPixelBuffer,
                                     rotation: videoFrame.rotation,
                                     timeStampNs: videoFrame.timeStampNs
@@ -339,40 +316,28 @@ import VideoToolbox
     
     func clearBackgroundImage() {
         backgroundCIImage = nil
+        
+        if let pool = pixelBufferPool {
+            self.pixelBufferPool = nil
+            CVPixelBufferPoolFlush(pool, CVPixelBufferPoolFlushFlags.excessBuffers)
+        }
     }
     
     // MARK: - Private Methods
-    private func updateBackgroundImageIfNeeded(_ backgroundImage: UIImage?) {
+    private func updateBackgroundImageIfNeeded(_ backgroundImage: UIImage?, size: CGSize? = nil) {
         guard let backgroundImage = backgroundImage else {
-            self.backgroundCIImage = nil
+            backgroundCIImage = nil
             return
         }
         
-        if self.backgroundCIImage == nil {
-            // Resize background image to reasonable size to save memory
-//            let maxDimension: CGFloat = 1920
-            let resizedImage = resizeImageIfNeeded(backgroundImage)
-            self.backgroundCIImage = CIImage(image: resizedImage)
+        if backgroundCIImage == nil {
+            let resizedImage = resizeImageIfNeeded(backgroundImage, size: size)
+            backgroundCIImage = CIImage(image: resizedImage)
         }
     }
     
-//    private func resizeImageIfNeeded(_ image: UIImage, maxDimension: CGFloat) -> UIImage {
-//        let size = image.size
-//        if size.width <= maxDimension && size.height <= maxDimension {
-//            return image
-//        }
-//        
-//        let ratio = min(maxDimension / size.width, maxDimension / size.height)
-//        let newSize = CGSize(width: size.width * ratio, height: size.height * ratio)
-//        
-//        let renderer = UIGraphicsImageRenderer(size: newSize)
-//        return renderer.image { _ in
-//            image.draw(in: CGRect(origin: .zero, size: newSize))
-//        }
-//    }
-    
-    private func resizeImageIfNeeded(_ image: UIImage) -> UIImage {
-        let screenSize = UIScreen.main.bounds.size
+    private func resizeImageIfNeeded(_ image: UIImage, size: CGSize? = nil) -> UIImage {
+        let screenSize = size ?? UIScreen.main.bounds.size
         
         // Calculate target size based on screen dimensions with scale factor
         let targetSize = CGSize(
@@ -397,11 +362,6 @@ import VideoToolbox
             height: imageSize.height * scaleFactor
         )
         
-//        let renderer = UIGraphicsImageRenderer(size: newSize)
-//        return renderer.image { _ in
-//            image.draw(in: CGRect(origin: .zero, size: newSize))
-//        }
-        
         // Use more memory-efficient image resizing
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1.0 // Don't use device scale since we already calculated it
@@ -409,6 +369,7 @@ import VideoToolbox
         
         let renderer = UIGraphicsImageRenderer(size: newSize, format: format)
         return renderer.image { context in
+            context.cgContext.interpolationQuality = .medium
             image.draw(in: CGRect(origin: .zero, size: newSize))
         }
     }
@@ -432,9 +393,9 @@ import VideoToolbox
         
         let finalCompositeImage: CIImage
         
-        if let backgroundCIImage = self.backgroundCIImage {
+        if let backgroundCIImage = backgroundCIImage {
             // Use custom background
-            finalCompositeImage = self.compositeWithBackground(
+            finalCompositeImage = compositeWithBackground(
                 foreground: maskedCIImage,
                 background: backgroundCIImage,
                 size: frameSize,
@@ -442,7 +403,7 @@ import VideoToolbox
             )
         } else {
             // Use blurred background
-            finalCompositeImage = self.compositeWithBlurredBackground(
+            finalCompositeImage = compositeWithBlurredBackground(
                 foreground: maskedCIImage,
                 fullPixelBuffer: fullPixelBuffer,
                 frameSize: frameSize
@@ -450,43 +411,38 @@ import VideoToolbox
         }
         
         // MEMORY MANAGEMENT: Use pixel buffer pool
-        self.convertCIImageToPixelBufferWithPool(finalCompositeImage, size: frameSize) { pixelBuffer in
-            completion(pixelBuffer, nil)
-        }
+        let pixelBuffer = convertCIImageToPixelBufferWithPool(finalCompositeImage, size: frameSize)
+        completion(pixelBuffer, nil)
     }
     
     // MEMORY MANAGEMENT: Improved pixel buffer creation with pooling
     private func convertCIImageToPixelBufferWithPool(
         _ ciImage: CIImage,
-        size: CGSize,
-        completion: @escaping (CVPixelBuffer?) -> Void
-    ) {
-        // Create or reuse pixel buffer pool
+        size: CGSize) -> CVPixelBuffer? {
         if pixelBufferPool == nil || poolFrameSize != size {
             createPixelBufferPool(size: size)
         }
         
         guard let pool = pixelBufferPool else {
-            completion(nil)
-            return
+            return nil
         }
         
         var pixelBuffer: CVPixelBuffer?
         let status = CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pool, &pixelBuffer)
         
         guard status == kCVReturnSuccess, let buffer = pixelBuffer else {
-            completion(nil)
-            return
+            return nil
         }
         
         // Render using CIContext
-        ciContext.render(ciImage, to: buffer)
-        completion(buffer)
+        let renderBounds = CGRect(origin: .zero, size: size)
+        ciContext.render(ciImage, to: buffer, bounds: renderBounds, colorSpace: CGColorSpaceCreateDeviceRGB())
+        return buffer
     }
     
     private func createPixelBufferPool(size: CGSize) {
         if let oldPool = pixelBufferPool {
-            CVPixelBufferPoolFlush(oldPool, [])
+            CVPixelBufferPoolFlush(oldPool, CVPixelBufferPoolFlushFlags.excessBuffers)
         }
         
         let pixelBufferAttributes: [String: Any] = [
@@ -501,7 +457,7 @@ import VideoToolbox
         
         let poolAttributes: [String: Any] = [
             kCVPixelBufferPoolMinimumBufferCountKey as String: 3,
-            kCVPixelBufferPoolMaximumBufferAgeKey as String: 10
+            kCVPixelBufferPoolMaximumBufferAgeKey as String: 0
         ]
         
         var newPool: CVPixelBufferPool?
@@ -527,7 +483,7 @@ import VideoToolbox
         rotation: RTCVideoRotation
     ) -> CIImage {
         // Apply rotation to background
-        let rotatedBackground = self.applyRotationToBackground(background, rotation: rotation)
+        let rotatedBackground = applyRotationToBackground(background, rotation: rotation)
         
         // Scale background to fill frame (aspect fill)
         let scaleX = size.width / rotatedBackground.extent.width
@@ -553,7 +509,7 @@ import VideoToolbox
         videoOrientation: AVCaptureVideoOrientation
     ) -> CIImage {
         // Apply orientation to background based on AVCaptureVideoOrientation
-        let rotatedBackground = self.applyOrientationToBackground(background, orientation: videoOrientation)
+        let rotatedBackground = applyOrientationToBackground(background, orientation: videoOrientation)
         
         // Scale background to fill frame (aspect fill)
         let scaleX = size.width / rotatedBackground.extent.width
@@ -599,8 +555,8 @@ import VideoToolbox
             cachedBlurredBackground = nil
         }
         
-        cachedBlurredBackground = self.createBlurredImage(from: backgroundImage,
-                                                          radius: blurRadius)
+        cachedBlurredBackground = createBlurredImage(from: backgroundImage,
+                                                     radius: blurRadius)
         
         guard let blurredBackground = cachedBlurredBackground else {
             return foreground ?? CIImage(color: .black)
@@ -611,9 +567,9 @@ import VideoToolbox
     
     
     private func applyRotationToBackground(_ background: CIImage, rotation: RTCVideoRotation) -> CIImage {
-        #if os(macOS)
+#if os(macOS)
         return background.oriented(.upMirrored)
-        #elseif os(iOS)
+#elseif os(iOS)
         switch rotation {
         case ._90:
             return background.oriented(.leftMirrored)
@@ -622,7 +578,7 @@ import VideoToolbox
         default:
             return background
         }
-        #endif
+#endif
     }
     
     private func createBlurredImage(from image: CIImage, radius: Float) -> CIImage? {
@@ -657,11 +613,16 @@ extension RTCVirtualBackground {
         var newSampleBuffer: CMSampleBuffer?
         var formatDescription: CMVideoFormatDescription?
         
-        CMVideoFormatDescriptionCreateForImageBuffer(
+        let status = CMVideoFormatDescriptionCreateForImageBuffer(
             allocator: kCFAllocatorDefault,
             imageBuffer: pixelBuffer,
             formatDescriptionOut: &formatDescription
         )
+        
+        if status != noErr {
+            print("Error creating video format description: \(status)")
+            return nil
+        }
         
         guard let formatDesc = formatDescription else { return nil }
         
@@ -670,13 +631,18 @@ extension RTCVirtualBackground {
         timingInfo.presentationTimeStamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
         timingInfo.decodeTimeStamp = CMSampleBufferGetDecodeTimeStamp(sampleBuffer)
         
-        CMSampleBufferCreateReadyWithImageBuffer(
+        let imageBufferStatus = CMSampleBufferCreateReadyWithImageBuffer(
             allocator: kCFAllocatorDefault,
             imageBuffer: pixelBuffer,
             formatDescription: formatDesc,
             sampleTiming: &timingInfo,
             sampleBufferOut: &newSampleBuffer
         )
+        
+        if imageBufferStatus != noErr {
+            print("Error creating sample buffer: \(status)")
+            return nil
+        }
         
         guard let newSampleBuffer else {
             print("Cannot create sample buffer")

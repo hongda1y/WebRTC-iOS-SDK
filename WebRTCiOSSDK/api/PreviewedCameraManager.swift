@@ -29,7 +29,7 @@ public class PreviewedCameraManager: NSObject {
     
     // Memory management
     private var isProcessingFrame = false
-    private let processingQueue = DispatchQueue(label: "com.camera.processing", qos: .userInitiated)
+    //    private let processingQueue = DispatchQueue(label: "com.camera.processing", qos: .userInitiated)
     private var frameDropCount = 0
     private let maxConsecutiveDrops = 5
     
@@ -53,13 +53,11 @@ public class PreviewedCameraManager: NSObject {
         
         super.init()
         setupCaptureSession()
-        setupMemoryWarningObserver()
     }
     
     deinit {
         stopCapture()
         cleanupResources()
-        NotificationCenter.default.removeObserver(self)
     }
     
     // MARK: - Public Methods
@@ -84,15 +82,15 @@ public class PreviewedCameraManager: NSObject {
         }
     }
     
-//    public func stopCapture() {
-//        guard captureSession.isRunning, isCameraAvailable else { return }
-//        
-//        captureSession.stopRunning()
-//        
-////        DispatchQueue.global(qos: .background).async { [weak self] in
-////            self?.captureSession.stopRunning()
-////        }
-//    }
+    //    public func stopCapture() {
+    //        guard captureSession.isRunning, isCameraAvailable else { return }
+    //
+    //        captureSession.stopRunning()
+    //
+    ////        DispatchQueue.global(qos: .background).async { [weak self] in
+    ////            self?.captureSession.stopRunning()
+    ////        }
+    //    }
     
     public func setBackgroundEffect(_ videoEffect: VideoEffect?) {
         virtualBackground.clearBackgroundImage()
@@ -111,41 +109,9 @@ public class PreviewedCameraManager: NSObject {
         return previewLayer!
     }
     
-    // MARK: - Memory Management
-    private func setupMemoryWarningObserver() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleMemoryWarning),
-            name: UIApplication.didReceiveMemoryWarningNotification,
-            object: nil
-        )
-    }
-    
-    @objc private func handleMemoryWarning() {
-        print("Memory warning received - performing cleanup")
-        flushPreviewLayer()
-        // Optionally reduce quality temporarily
-        reduceQualityTemporarily()
-    }
     
     private func flushPreviewLayer() {
         previewLayer?.flushAndRemoveImage()
-    }
-    
-    private func reduceQualityTemporarily() {
-        // Temporarily reduce session preset if possible
-        captureSession.beginConfiguration()
-        if captureSession.sessionPreset == .hd1280x720 {
-            if captureSession.canSetSessionPreset(.vga640x480) {
-                captureSession.sessionPreset = .vga640x480
-            }
-        }
-        captureSession.commitConfiguration()
-        
-        // Reset to higher quality after a delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) { [weak self] in
-            self?.restoreOriginalQuality()
-        }
     }
     
     private func restoreOriginalQuality() {
@@ -156,73 +122,73 @@ public class PreviewedCameraManager: NSObject {
         captureSession.commitConfiguration()
     }
     
-//    private func cleanupResources() {
-//        backgroundEffect = nil
-//        previewLayer?.removeFromSuperlayer()
-//        previewLayer = nil
-//        
-//        // Clean up capture session
-//        captureSession.beginConfiguration()
-//        if let input = videoInput {
-//            captureSession.removeInput(input)
-//        }
-//        captureSession.removeOutput(videoDataOutput)
-//        captureSession.commitConfiguration()
-//    }
-    
-    // ENHANCED RESOURCE CLEANUP - Fixed version
-    private func cleanupResources() {
-        guard !isCleanedUp else { return }
-        
-        print("Starting resource cleanup...")
-        isCleanedUp = true
-        
-        // Stop capture session first
-        if captureSession.isRunning {
-            captureSession.stopRunning()
-        }
-        
-        // Clear background effect first
+    public func cleanupResources() {
         backgroundEffect = nil
-        virtualBackground.clearBackgroundImage()
+        previewLayer?.removeFromSuperlayer()
+        previewLayer = nil
         
-//        processingQueue.suspend()
-//        captureQueue.suspend()
-        
-//        // Clean up preview layer on main thread
-//        DispatchQueue.main.sync {
-//            if let layer = self.previewLayer {
-//                layer.flushAndRemoveImage()
-//                layer.removeFromSuperlayer()
-//                
-//                // Clear the sample buffer renderer
-//                if #available(iOS 17.0, *) {
-//                    layer.sampleBufferRenderer.flush()
-//                }
-//            }
-//            self.previewLayer = nil
-//        }
-//        
-//        // Clean up capture session
-//        captureSession.beginConfiguration()
-//        
-//        // Remove all inputs
-//        for input in captureSession.inputs {
-//            captureSession.removeInput(input)
-//        }
-//        
-//        // Remove all outputs
-//        for output in captureSession.outputs {
-//            captureSession.removeOutput(output)
-//        }
-//        
-//        captureSession.commitConfiguration()
-//        
-//        // Clear references
-//        videoInput = nil
-        
-        print("Resources cleaned up successfully")
+        // Clean up capture session
+        captureSession.beginConfiguration()
+        if let input = videoInput {
+            captureSession.removeInput(input)
+        }
+        captureSession.removeOutput(videoDataOutput)
+        captureSession.commitConfiguration()
     }
+    
+    //    // ENHANCED RESOURCE CLEANUP - Fixed version
+    //    private func cleanupResources() {
+    //        guard !isCleanedUp else { return }
+    //
+    //        print("Starting resource cleanup...")
+    //        isCleanedUp = true
+    //
+    //        // Stop capture session first
+    //        if captureSession.isRunning {
+    //            captureSession.stopRunning()
+    //        }
+    //
+    //        // Clear background effect first
+    //        backgroundEffect = nil
+    //        virtualBackground.clearBackgroundImage()
+    //
+    ////        processingQueue.suspend()
+    ////        captureQueue.suspend()
+    //
+    ////        // Clean up preview layer on main thread
+    ////        DispatchQueue.main.sync {
+    ////            if let layer = self.previewLayer {
+    ////                layer.flushAndRemoveImage()
+    ////                layer.removeFromSuperlayer()
+    ////
+    ////                // Clear the sample buffer renderer
+    ////                if #available(iOS 17.0, *) {
+    ////                    layer.sampleBufferRenderer.flush()
+    ////                }
+    ////            }
+    ////            self.previewLayer = nil
+    ////        }
+    ////
+    ////        // Clean up capture session
+    ////        captureSession.beginConfiguration()
+    ////
+    ////        // Remove all inputs
+    ////        for input in captureSession.inputs {
+    ////            captureSession.removeInput(input)
+    ////        }
+    ////
+    ////        // Remove all outputs
+    ////        for output in captureSession.outputs {
+    ////            captureSession.removeOutput(output)
+    ////        }
+    ////
+    ////        captureSession.commitConfiguration()
+    ////
+    ////        // Clear references
+    ////        videoInput = nil
+    //
+    //        print("Resources cleaned up successfully")
+    //    }
     
     // MARK: - Private Setup Methods
     private func setupCaptureSession() {
@@ -278,10 +244,10 @@ public class PreviewedCameraManager: NSObject {
                 // Configure camera settings
                 try camera.lockForConfiguration()
                 
-                // Set frame rate if supported
-                if camera.isSmoothAutoFocusSupported {
-                    camera.isSmoothAutoFocusEnabled = true
-                }
+//                // Set frame rate if supported
+//                if camera.isSmoothAutoFocusSupported {
+//                    camera.isSmoothAutoFocusEnabled = true
+//                }
                 
                 // Configure frame rate to be more conservative
                 configureFrameRate(for: camera)
@@ -332,9 +298,6 @@ public class PreviewedCameraManager: NSObject {
     private func setupPreviewLayer() {
         previewLayer = AVSampleBufferDisplayLayer()
         previewLayer?.videoGravity = .resizeAspectFill
-        
-//        // Enable more aggressive sample buffer management
-//        previewLayer?.sampleBufferRenderer.requiresFlushToResumeDecoding = false
     }
     
     private func findCamera(position: AVCaptureDevice.Position) -> AVCaptureDevice? {
@@ -357,22 +320,22 @@ public class PreviewedCameraManager: NSObject {
         return discoverySession.devices.first
     }
     
-//    private func configureFrameRate(for device: AVCaptureDevice) {
-//        // Use more conservative frame rate to reduce memory pressure
-//        
-//        for format in device.formats {
-//            let ranges = format.videoSupportedFrameRateRanges
-//            
-//            for range in ranges {
-//                if range.minFrameRate <= targetFrame && range.maxFrameRate >= targetFrame {
-//                    device.activeFormat = format
-//                    device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: CMTimeScale(targetFrame))
-//                    device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: CMTimeScale(targetFrame))
-//                    return
-//                }
-//            }
-//        }
-//    }
+    //    private func configureFrameRate(for device: AVCaptureDevice) {
+    //        // Use more conservative frame rate to reduce memory pressure
+    //
+    //        for format in device.formats {
+    //            let ranges = format.videoSupportedFrameRateRanges
+    //
+    //            for range in ranges {
+    //                if range.minFrameRate <= targetFrame && range.maxFrameRate >= targetFrame {
+    //                    device.activeFormat = format
+    //                    device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: CMTimeScale(targetFrame))
+    //                    device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: CMTimeScale(targetFrame))
+    //                    return
+    //                }
+    //            }
+    //        }
+    //    }
     
     private func configureFrameRate(for device: AVCaptureDevice) {
         do {
@@ -411,7 +374,7 @@ public class PreviewedCameraManager: NSObject {
             if let range = closestRange {
                 // Use the closest supported frame rate
                 let actualFrameRate = (targetFrame < range.minFrameRate) ? range.minFrameRate :
-                                     (targetFrame > range.maxFrameRate) ? range.maxFrameRate : targetFrame
+                (targetFrame > range.maxFrameRate) ? range.maxFrameRate : targetFrame
                 
                 device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: CMTimeScale(actualFrameRate))
                 device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: CMTimeScale(actualFrameRate))
@@ -481,10 +444,7 @@ extension PreviewedCameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
         let currentOrientation = connection.videoOrientation
         
         // Process on separate queue to avoid blocking
-        processingQueue.async { [weak self] in
-            guard let self = self, !self.isCleanedUp else { return }
-            self.processFrameWithVirtualBackground(sampleBuffer: sampleBuffer, orientation: currentOrientation)
-        }
+        processFrameWithVirtualBackground(sampleBuffer: sampleBuffer, orientation: currentOrientation)
     }
     
     private func processFrameWithVirtualBackground(
@@ -515,7 +475,7 @@ extension PreviewedCameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
                 self?.isProcessingFrame = false
             }
             
-            guard let self = self, !self.isCleanedUp else { return }
+            guard let self, !isCleanedUp else { return }
             
             if let error {
                 print("Virtual background processing error: \(error)")
@@ -525,25 +485,26 @@ extension PreviewedCameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
             if let maskedSampleBuffer {
                 DispatchQueue.main.async { [weak self] in
                     // Check if preview layer is still valid before enqueueing
-                    guard let previewLayer = self?.previewLayer else { return }
+                    guard let self, let previewLayer = self.previewLayer else { return }
                     
                     // Flush old samples if queue is getting too full
                     if previewLayer.isReadyForMoreMediaData {
-                        self?.enqueue(maskedSampleBuffer)
+                        self.enqueue(maskedSampleBuffer)
                     } else {
                         // If not ready, flush and try again
                         previewLayer.flushAndRemoveImage()
                         if previewLayer.isReadyForMoreMediaData {
-                            self?.enqueue(maskedSampleBuffer)
+                            self.enqueue(maskedSampleBuffer)
                         }
                     }
                 }
             }
         }
+        //        }
     }
     
     private func enqueue(_ sampleBuffer: CMSampleBuffer) {
-        guard !isCleanedUp, let previewLayer = previewLayer else { return }
+        guard !isCleanedUp, let previewLayer else { return }
         
         if #available(iOS 17.0, *) {
             previewLayer.sampleBufferRenderer.enqueue(sampleBuffer)
