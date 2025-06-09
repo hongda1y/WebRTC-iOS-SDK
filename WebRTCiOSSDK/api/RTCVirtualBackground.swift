@@ -156,12 +156,10 @@ public class RTCVirtualBackground: NSObject {
                 
                 try handler.perform([personMaskRequest])
                 
-                let observation = personMaskRequest.results?.first
-                let allInstances = observation?.allInstances
-                
                 var maskedImage: CVPixelBuffer?
-                if let allInstances {
-                    maskedImage = try observation?.generateMaskedImage(
+                if let observation = personMaskRequest.results?.first {
+                    let allInstances = observation.allInstances
+                    maskedImage = try observation.generateMaskedImage(
                         ofInstances: allInstances,
                         from: handler,
                         croppedToInstancesExtent: false
@@ -277,8 +275,9 @@ public class RTCVirtualBackground: NSObject {
                 let allInstances = observation?.allInstances
                 
                 var maskedImage: CVPixelBuffer?
-                if let allInstances {
-                    maskedImage = try observation?.generateMaskedImage(
+                if let observation = personMaskRequest.results?.first {
+                    let allInstances = observation.allInstances
+                    maskedImage = try observation.generateMaskedImage(
                         ofInstances: allInstances,
                         from: handler,
                         croppedToInstancesExtent: false

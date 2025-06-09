@@ -82,16 +82,6 @@ public class PreviewedCameraManager: NSObject {
 //        }
     }
     
-    //    public func stopCapture() {
-    //        guard captureSession.isRunning, isCameraAvailable else { return }
-    //
-    //        captureSession.stopRunning()
-    //
-    ////        DispatchQueue.global(qos: .background).async { [weak self] in
-    ////            self?.captureSession.stopRunning()
-    ////        }
-    //    }
-    
     public func setBackgroundEffect(_ videoEffect: VideoEffect?) {
         virtualBackground.clearBackgroundImage()
         self.backgroundEffect = videoEffect
@@ -135,60 +125,6 @@ public class PreviewedCameraManager: NSObject {
         captureSession.removeOutput(videoDataOutput)
         captureSession.commitConfiguration()
     }
-    
-    //    // ENHANCED RESOURCE CLEANUP - Fixed version
-    //    private func cleanupResources() {
-    //        guard !isCleanedUp else { return }
-    //
-    //        print("Starting resource cleanup...")
-    //        isCleanedUp = true
-    //
-    //        // Stop capture session first
-    //        if captureSession.isRunning {
-    //            captureSession.stopRunning()
-    //        }
-    //
-    //        // Clear background effect first
-    //        backgroundEffect = nil
-    //        virtualBackground.clearBackgroundImage()
-    //
-    ////        processingQueue.suspend()
-    ////        captureQueue.suspend()
-    //
-    ////        // Clean up preview layer on main thread
-    ////        DispatchQueue.main.sync {
-    ////            if let layer = self.previewLayer {
-    ////                layer.flushAndRemoveImage()
-    ////                layer.removeFromSuperlayer()
-    ////
-    ////                // Clear the sample buffer renderer
-    ////                if #available(iOS 17.0, *) {
-    ////                    layer.sampleBufferRenderer.flush()
-    ////                }
-    ////            }
-    ////            self.previewLayer = nil
-    ////        }
-    ////
-    ////        // Clean up capture session
-    ////        captureSession.beginConfiguration()
-    ////
-    ////        // Remove all inputs
-    ////        for input in captureSession.inputs {
-    ////            captureSession.removeInput(input)
-    ////        }
-    ////
-    ////        // Remove all outputs
-    ////        for output in captureSession.outputs {
-    ////            captureSession.removeOutput(output)
-    ////        }
-    ////
-    ////        captureSession.commitConfiguration()
-    ////
-    ////        // Clear references
-    ////        videoInput = nil
-    //
-    //        print("Resources cleaned up successfully")
-    //    }
     
     // MARK: - Private Setup Methods
     private func setupCaptureSession() {
@@ -320,23 +256,6 @@ public class PreviewedCameraManager: NSObject {
         return discoverySession.devices.first
     }
     
-    //    private func configureFrameRate(for device: AVCaptureDevice) {
-    //        // Use more conservative frame rate to reduce memory pressure
-    //
-    //        for format in device.formats {
-    //            let ranges = format.videoSupportedFrameRateRanges
-    //
-    //            for range in ranges {
-    //                if range.minFrameRate <= targetFrame && range.maxFrameRate >= targetFrame {
-    //                    device.activeFormat = format
-    //                    device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: CMTimeScale(targetFrame))
-    //                    device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: CMTimeScale(targetFrame))
-    //                    return
-    //                }
-    //            }
-    //        }
-    //    }
-    
     private func configureFrameRate(for device: AVCaptureDevice) {
         do {
             try device.lockForConfiguration()
@@ -408,6 +327,7 @@ public class PreviewedCameraManager: NSObject {
             completion(false)
         }
     }
+    
 }
 
 // MARK: - AVCaptureVideoDataOutputSampleBufferDelegate
@@ -485,7 +405,7 @@ extension PreviewedCameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
             if let maskedSampleBuffer {
                 DispatchQueue.main.async { [weak self] in
                     // Check if preview layer is still valid before enqueueing
-                    guard let self, let previewLayer = self.previewLayer else { return }
+                    guard let self, let previewLayer else { return }
                     
                     // Flush old samples if queue is getting too full
                     if previewLayer.isReadyForMoreMediaData {
@@ -500,7 +420,6 @@ extension PreviewedCameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
                 }
             }
         }
-        //        }
     }
     
     private func enqueue(_ sampleBuffer: CMSampleBuffer) {
@@ -512,4 +431,6 @@ extension PreviewedCameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
             previewLayer.enqueue(sampleBuffer)
         }
     }
+    
+    
 }

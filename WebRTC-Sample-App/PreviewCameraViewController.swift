@@ -21,13 +21,6 @@ class ParentViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         setupButton()
-        setupCameraView()
-    }
-    
-    override func viewIsAppearing(_ animated: Bool) {
-        super.viewIsAppearing(animated)
-        
-        setupCameraManager()
     }
     
     override func viewDidLayoutSubviews() {
