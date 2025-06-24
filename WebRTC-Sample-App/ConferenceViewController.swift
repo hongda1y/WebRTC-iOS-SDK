@@ -35,7 +35,7 @@ open class ConferenceViewController: UIViewController ,  AVCaptureVideoDataOutpu
         return String((0..<length).map{ _ in characters.randomElement()! })
     }
     
-
+    var isFirst: Bool = true
     
     open override func viewWillAppear(_ animated: Bool)
     {
@@ -70,6 +70,10 @@ open class ConferenceViewController: UIViewController ,  AVCaptureVideoDataOutpu
         self.conferenceClient?.setTargetResolution(width: 854, height: 480)
         self.conferenceClient?.publish(streamId: self.publisherStreamId, token: "", mainTrackId: roomId);
         
+        Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { timer in
+            self.isFirst.toggle()
+            self.conferenceClient?.useVideoEffect(.image(image: UIImage(named: "conferenceBackground_\(self.isFirst ? 1 : 2)")!))
+        }
         
         //this plays the streams in the room
         

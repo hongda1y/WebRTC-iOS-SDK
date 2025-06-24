@@ -69,6 +69,38 @@ public class PreviewedCameraManager: NSObject {
         }
     }
     
+    public func setupInterruptNotification() {
+        NotificationCenter.default.addObserver(forName: AVCaptureSession.interruptionEndedNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.startCapture()
+        }
+        
+        NotificationCenter.default.addObserver(forName: AVCaptureSession.wasInterruptedNotification, object: nil, queue: .main) { notification in
+            guard let userInfo = notification.userInfo,
+                  let reasonValue = userInfo[AVCaptureSessionInterruptionReasonKey] as? NSNumber,
+                  let reason = AVCaptureSession.InterruptionReason(rawValue: reasonValue.intValue) else {
+                return
+            }
+            
+            switch reason {
+            case .audioDeviceInUseByAnotherClient,
+                    .videoDeviceInUseByAnotherClient:
+                print("Camera is in use by another client.")
+                
+            case .videoDeviceNotAvailableWithMultipleForegroundApps:
+                print("Camera not available due to multitasking.")
+                
+            case .videoDeviceNotAvailableInBackground:
+                print("Camera not available in background.")
+                
+            case .videoDeviceNotAvailableDueToSystemPressure:
+                print("System pressure caused camera to be unavailable.")
+                
+            @unknown default:
+                print("Unknown interruption reason")
+            }
+        }
+    }
+    
     public func stopCapture() {
         guard captureSession.isRunning, isCameraAvailable else { return }
         

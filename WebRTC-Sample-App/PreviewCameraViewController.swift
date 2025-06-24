@@ -128,7 +128,7 @@ class PreviewCameraViewController: UIViewController {
     }
     
     private func setupCameraManager() {
-        cameraManager = PreviewedCameraManager(preset: .vga640x480, frame: 15)
+        cameraManager = PreviewedCameraManager(preset: .vga640x480, frame: 24)
     
         previewLayer = cameraManager!.getPreviewLayer()
         previewLayer?.bounds = view.bounds
