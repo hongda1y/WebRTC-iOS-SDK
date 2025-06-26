@@ -129,6 +129,8 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     
     private var metaData: [String: Any] = [:]
     
+    private var rtcFileName: String = ""
+    
     /**
     Degradation preference when publishing streams. By default its values is maintainResolution because when resolution changes HLS playback does not play in safari
     */
@@ -599,7 +601,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
             AntMediaClient.printf("Has wsClient? (start) : \(String(describing: self.webRTCClientMap[id]))")
             
             self.webRTCClientMap[id] = WebRTCClient.init(remoteVideoView: remoteView, localVideoView: localView, delegate: self, mode: mode != .unspecified ? mode : self.mode , cameraPosition: self.cameraPosition, targetWidth: self.targetWidth, targetHeight: self.targetHeight, videoEnabled: self.videoEnable, enableDataChannel: self.enableDataChannel, useExternalCameraSource: self.useExternalCameraSource, videoEffect: videoEffect, externalAudio: self.externalAudioEnabled, externalVideoCapture: self.externalVideoCapture, cameraSourceFPS: self.cameraSourceFPS, streamId:id,
-                                                         degradationPreference: self.degradationPreference);
+                                                         degradationPreference: self.degradationPreference, rtcFileName: self.rtcFileName);
             
             self.webRTCClientMap[id]?.setToken(token)
             
@@ -807,7 +809,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     }
     
     public func setRTCFile(name: String) {
-        webRTCClientMap[getPublisherStreamId()]?.setRTCFile(name: name)
+        self.rtcFileName = name
     }
     
     func sendVideoTrackStatusNotification(enabled:Bool) {

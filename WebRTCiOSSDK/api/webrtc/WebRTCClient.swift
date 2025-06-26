@@ -101,7 +101,7 @@ class WebRTCClient: NSObject {
     }
     
     public convenience init(remoteVideoView: RTCVideoRenderer?, localVideoView: RTCVideoRenderer?, delegate: WebRTCClientDelegate, mode: AntMediaClientMode, cameraPosition: AVCaptureDevice.Position, targetWidth: Int, targetHeight: Int, videoEnabled: Bool, enableDataChannel: Bool, useExternalCameraSource: Bool, videoEffect: VideoEffect? = nil, externalAudio: Bool = false, externalVideoCapture: Bool = false, cameraSourceFPS: Int = 30, streamId: String,
-                            degradationPreference: RTCDegradationPreference = RTCDegradationPreference.maintainResolution) {
+                            degradationPreference: RTCDegradationPreference = RTCDegradationPreference.maintainResolution, rtcFileName: String? = nil) {
         self.init(remoteVideoView: remoteVideoView, localVideoView: localVideoView, delegate: delegate, externalAudio: externalAudio)
         self.cameraPosition = cameraPosition
         self.targetWidth = targetWidth
@@ -114,6 +114,7 @@ class WebRTCClient: NSObject {
         self.cameraSourceFPS = cameraSourceFPS;
         self.streamId = streamId;
         self.degradationPreference = degradationPreference
+        self.rtcFileName = rtcFileName
         
         if (mode != .play) {
             self.addLocalMediaStream()
