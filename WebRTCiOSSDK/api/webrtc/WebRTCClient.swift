@@ -114,7 +114,7 @@ class WebRTCClient: NSObject {
         self.cameraSourceFPS = cameraSourceFPS;
         self.streamId = streamId;
         self.degradationPreference = degradationPreference
-        self.rtcFileName = rtcFileName
+        self.rtcFileName = rtcFileName ?? ""
         
         if (mode != .play) {
             self.addLocalMediaStream()
