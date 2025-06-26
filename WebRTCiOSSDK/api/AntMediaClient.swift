@@ -806,6 +806,10 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         }
     }
     
+    public func setRTCFile(name: String) {
+        webRTCClientMap[getPublisherStreamId()]?.setRTCFile(name: name)
+    }
+    
     func sendVideoTrackStatusNotification(enabled:Bool) {
         let eventType = enabled ? EVENT_TYPE_CAM_TURNED_ON : EVENT_TYPE_CAM_TURNED_OFF
         let id = getPublisherStreamId()

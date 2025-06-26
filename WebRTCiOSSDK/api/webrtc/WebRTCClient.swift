@@ -35,6 +35,8 @@ class WebRTCClient: NSObject {
     var videoSender: RTCRtpSender?
     var dataChannel: RTCDataChannel?
     
+    private var rtcFileName: String = ""
+    
     private var token: String!
     private var streamId: String!
 
@@ -340,7 +342,7 @@ class WebRTCClient: NSObject {
     private func startCapture() -> Bool {
         if let videoCapturer = videoCapturer as? RTCFileVideoCapturer {
 //            try? AVAudioSession.sharedInstance().setActive(true)
-            videoCapturer.startCapturing(fromFileNamed: "VideoSample.mp4") { error in
+            videoCapturer.startCapturing(fromFileNamed: rtcFileName) { error in
                 print(error.localizedDescription)
             }
             
@@ -528,6 +530,10 @@ class WebRTCClient: NSObject {
             localVideoTrack.add(localVideoView)
 //            localVideoTrack.isEnabled = true
         }
+    }
+    
+    public func setRTCFile(name: String) {
+        rtcFileName = name
     }
     
     public func useVideoEffect(_ effect: VideoEffect? = nil) {
