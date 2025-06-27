@@ -537,6 +537,10 @@ class WebRTCClient: NSObject {
         rtcFileName = name
     }
     
+    public func getLocalTrack() -> RTCVideoTrack {
+        localVideoTrack
+    }
+    
     public func useVideoEffect(_ effect: VideoEffect? = nil) {
         self.videoEffect = effect
         
