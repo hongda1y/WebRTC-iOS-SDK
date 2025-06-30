@@ -26,7 +26,12 @@ class WebRTCClient: NSObject {
     private var videoCapturer: RTCVideoCapturer?
     private var pipe: RTCVideoPipe?
     
-    var localVideoTrack: RTCVideoTrack!
+    var localVideoTrack: RTCVideoTrack! {
+        didSet {
+            delegate?.onLocalTrackUpdate(track: localVideoTrack)
+        }
+    }
+    
     var localAudioTrack: RTCAudioTrack!
     var remoteVideoTrack: RTCVideoTrack!
     var remoteAudioTrack: RTCAudioTrack!

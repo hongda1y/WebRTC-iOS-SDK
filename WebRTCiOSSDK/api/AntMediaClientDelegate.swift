@@ -61,6 +61,7 @@ public protocol AntMediaClientDelegate: AnyObject {
      */
     func localStreamStarted(streamId: String)
     
+    func localStreamUpdate(track: RTCVideoTrack)
     
     /**
      Called when playing is started.
@@ -237,6 +238,10 @@ public extension AntMediaClientDelegate {
     
     func localStreamStarted(streamId: String) {
         AntMediaClient.printf("Local stream is started for stream with id:\(streamId)")
+    }
+    
+    func localStreamUpdate(track: RTCVideoTrack) {
+        AntMediaClient.printf("Local stream is updated")
     }
     
     func disconnected(streamId: String) {

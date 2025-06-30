@@ -1489,6 +1489,10 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
 }
 
 extension AntMediaClient: WebRTCClientDelegate {
+    func onLocalTrackUpdate(track: RTCVideoTrack) {
+        delegate?.localStreamUpdate(track: track)
+    }
+    
     func rtcDataChannelDidChangeState(_ state: RTCDataChannelState) {
         delegate?.dataChannelDidChangeState(state)
     }

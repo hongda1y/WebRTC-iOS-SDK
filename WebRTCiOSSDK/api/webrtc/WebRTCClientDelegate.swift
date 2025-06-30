@@ -34,6 +34,8 @@ internal protocol WebRTCClientDelegate {
     
     func addLocalStream(streamId:String)
     
+    func onLocalTrackUpdate(track: RTCVideoTrack)
+    
     func connectionStateChanged(newState: RTCIceConnectionState, streamId:String);
     
     func dataReceivedFromDataChannel(didReceiveData data: RTCDataBuffer, streamId:String);
