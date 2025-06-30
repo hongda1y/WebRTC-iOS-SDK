@@ -28,7 +28,9 @@ class WebRTCClient: NSObject {
     
     var localVideoTrack: RTCVideoTrack! {
         didSet {
-            delegate?.onLocalTrackUpdate(track: localVideoTrack)
+            if let localVideoTrack {
+                delegate?.onLocalTrackUpdate(track: localVideoTrack)
+            }
         }
     }
     
