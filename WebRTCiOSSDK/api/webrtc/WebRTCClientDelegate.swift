@@ -8,7 +8,7 @@
 import Foundation
 import WebRTC
 
-internal protocol WebRTCClientDelegate {
+internal protocol WebRTCClientDelegate: AnyObject {
     
     func sendMessage(_ message: [String: Any])
     

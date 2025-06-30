@@ -20,7 +20,7 @@ class WebRTCClient: NSObject {
     private var audioDeviceModule: RTCAudioDeviceModule? = nil;
     private static var factory: RTCPeerConnectionFactory! = nil;
     
-    var delegate: WebRTCClientDelegate?
+    weak var delegate: WebRTCClientDelegate?
     var peerConnection : RTCPeerConnection?
     
     private var videoCapturer: RTCVideoCapturer?
