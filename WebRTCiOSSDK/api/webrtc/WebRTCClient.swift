@@ -307,6 +307,7 @@ class WebRTCClient: NSObject {
         
         self.videoCapturer = nil;
         
+        
         self.peerConnection?.close()
         self.peerConnection = nil;
         AntMediaClient.printf("disconnected and released resources for \(streamId)")

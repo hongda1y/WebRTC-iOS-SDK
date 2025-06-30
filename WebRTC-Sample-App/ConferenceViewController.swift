@@ -47,6 +47,7 @@ open class ConferenceViewController: UIViewController ,  AVCaptureVideoDataOutpu
         
         AntMediaClient.setDebug(true)
         self.conferenceClient =  AntMediaClient.init();
+        self.conferenceClient?.setRTCFile(name: "VideoSample.mp4")
         self.conferenceClient?.delegate = self
         self.conferenceClient?.setWebSocketServerUrl(url: self.clientUrl)
         self.conferenceClient?.setLocalView(container: self.localView)
@@ -70,10 +71,10 @@ open class ConferenceViewController: UIViewController ,  AVCaptureVideoDataOutpu
         self.conferenceClient?.setTargetResolution(width: 854, height: 480)
         self.conferenceClient?.publish(streamId: self.publisherStreamId, token: "", mainTrackId: roomId);
         
-        Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { timer in
-            self.isFirst.toggle()
-            self.conferenceClient?.useVideoEffect(.image(image: UIImage(named: "conferenceBackground_\(self.isFirst ? 1 : 2)")!))
-        }
+//        Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { timer in
+//            self.isFirst.toggle()
+//            self.conferenceClient?.useVideoEffect(.image(image: UIImage(named: "conferenceBackground_\(self.isFirst ? 1 : 2)")!))
+//        }
         
         //this plays the streams in the room
         

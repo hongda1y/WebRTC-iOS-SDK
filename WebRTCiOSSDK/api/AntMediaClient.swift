@@ -314,8 +314,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     // Force speaker
     public static func speakerOn() {
        
-        dispatchQueue.async {() in
-          
+        dispatchQueue.async {
             rtcAudioSession.lockForConfiguration()
             do {
                 try rtcAudioSession.overrideOutputAudioPort(.speaker)
@@ -329,7 +328,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     
     // Fallback to the default playing device: headphones/bluetooth/ear speaker
     public static func speakerOff() {
-        dispatchQueue.async {() in
+        dispatchQueue.async {
             
             rtcAudioSession.lockForConfiguration()
             do {
@@ -509,8 +508,9 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
      */
     open func connectWebSocket()
     {
-        AntMediaClient.dispatchQueue.async
-        {
+        AntMediaClient.dispatchQueue.async { [weak self] in
+            guard let self else { return }
+            
             AntMediaClient.printf("Connect websocket to \(self.getWsUrl())")
             if (!self.isWebSocketConnected && !self.isWebSocketConnecting) { //provides backward compatibility
                 self.isWebSocketConnecting = true;
@@ -1437,7 +1437,11 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         for (streamId, webrtcClient) in self.webRTCClientMap {
             webrtcClient.disconnect()
         }
-             
+        
+        (localView as? RTCMTLVideoView)?.removeFromSuperview()
+        (localView as? RTCMTLVideoView)?.delegate = nil
+        localView = nil
+        
         self.webRTCClientMap.removeAll();
         self.webSocket?.disconnect();
         
