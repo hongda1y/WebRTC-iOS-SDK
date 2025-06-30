@@ -1440,6 +1440,10 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         
         (localView as? RTCMTLVideoView)?.removeFromSuperview()
         (localView as? RTCMTLVideoView)?.delegate = nil
+        
+        (localView as? RTCEAGLVideoView)?.removeFromSuperview()
+        (localView as? RTCEAGLVideoView)?.delegate = nil
+        
         localView = nil
         
         self.webRTCClientMap.removeAll();
