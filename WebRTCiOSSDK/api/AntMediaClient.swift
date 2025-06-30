@@ -850,8 +850,8 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
             webSocket?.write(string: jsonString)
             AntMediaClient.printf("Send Publish onConnection message: \(jsonString)")
             //Add 3 seconds delay here and reconnectIfRequires has also 3 seconds delay
-            AntMediaClient.dispatchQueue.asyncAfter(deadline: .now() + 5.0) {
-                self.reconnectIfRequires();
+            AntMediaClient.dispatchQueue.asyncAfter(deadline: .now() + 5.0) { [weak self] in
+                self?.reconnectIfRequires();
             };
         }
         else {
