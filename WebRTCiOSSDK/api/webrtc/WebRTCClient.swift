@@ -303,6 +303,8 @@ class WebRTCClient: NSObject {
         }
         else if self.videoCapturer is RTCCustomFrameCapturer {
             (self.videoCapturer as? RTCCustomFrameCapturer)?.stopCapture()
+        } else if self.videoCapturer is RTCFileVideoCapturer {
+            (self.videoCapturer as? RTCFileVideoCapturer)?.stopCapture()
         }
         
         self.videoCapturer = nil;
