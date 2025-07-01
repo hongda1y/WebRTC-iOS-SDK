@@ -192,75 +192,75 @@ public extension AntMediaClientDelegate {
     func dataChannelDidChangeState(_ state: RTCDataChannelState) {}
     
     func onGetTrackList(_ tracks: [String]) {
-        AntMediaClient.printf("TrackList: \(tracks)")
+        printf("TrackList: \(tracks)")
     }
     
     func clientDidConnect(_ client: AntMediaClient) {
-        AntMediaClient.printf("Websocket is connected for \(client.getStreamId())")
+        printf("Websocket is connected for \(client.getStreamId())")
     }
     
     func audioLevelChanged(_ client: AntMediaClient, audioLevel: Double, hasAudio: Bool) {
         // TODO: not implemented yet
-        AntMediaClient.printf("audio level changed \(audioLevel) and hasAudio:\(hasAudio)")
+        printf("audio level changed \(audioLevel) and hasAudio:\(hasAudio)")
     }
         
     func eventHappened(streamId: String, eventType: String) {
-        AntMediaClient.printf("Event: \(eventType) happened in stream: \(streamId) ")
+        printf("Event: \(eventType) happened in stream: \(streamId) ")
     }
     
     func clientDidDisconnect(_ message: String) {
-        AntMediaClient.printf("Websocket is disconnected with this problem:\(message)");
+        printf("Websocket is disconnected with this problem:\(message)");
     }
     
     func trackAdded(track:RTCMediaStreamTrack, stream:[RTCMediaStream]) {
-        AntMediaClient.printf("Track is added with id:\(track.trackId) and kind:\(track.kind)")
+        printf("Track is added with id:\(track.trackId) and kind:\(track.kind)")
     }
     
     func trackRemoved(track:RTCMediaStreamTrack) {
-        AntMediaClient.printf("Track is removed with id:\(track.trackId) and kind:\(track.kind)")
+        printf("Track is removed with id:\(track.trackId) and kind:\(track.kind)")
     }
     
     func playFinished(streamId: String) {
-        AntMediaClient.printf("Play finished for stream with id:\(streamId)")
+        printf("Play finished for stream with id:\(streamId)")
     }
 
     func playStarted(streamId: String) {
-        AntMediaClient.printf("Play started for stream with id:\(streamId)")
+        printf("Play started for stream with id:\(streamId)")
     }
 
     func remoteStreamStarted(streamId: String) {
-        AntMediaClient.printf("Remote stream is started for stream with id:\(streamId)")
+        printf("Remote stream is started for stream with id:\(streamId)")
     }
     
     func remoteStreamRemoved(streamId: String) {
-        AntMediaClient.printf("Remote stream is removed for stream with id:\(streamId)")
+        printf("Remote stream is removed for stream with id:\(streamId)")
     }
     
     func localStreamStarted(streamId: String) {
-        AntMediaClient.printf("Local stream is started for stream with id:\(streamId)")
+        printf("Local stream is started for stream with id:\(streamId)")
     }
     
     func localStreamUpdate(track: RTCVideoTrack) {
-        AntMediaClient.printf("Local stream is updated")
+        printf("Local stream is updated")
     }
     
     func disconnected(streamId: String) {
-        AntMediaClient.printf("Peer connections is disconnected for stream with id:\(streamId)")
+        printf("Peer connections is disconnected for stream with id:\(streamId)")
     }
     
     func audioSessionDidStartPlayOrRecord(streamId: String) {
-        AntMediaClient.printf("Audio session is started to play or record for stream with id:\(streamId)")
+        printf("Audio session is started to play or record for stream with id:\(streamId)")
     }
     
     func streamInformation(streamInfo: [StreamInformation]) {
-        AntMediaClient.printf("Stream information has received")
+        printf("Stream information has received")
         for result in streamInfo {
-            AntMediaClient.printf("resolution width:\(result.streamWidth) heigh:\(result.streamHeight) video " + "bitrate:\(result.videoBitrate) audio bitrate:\(result.audioBitrate) codec:\(result.videoCodec)");
+            printf("resolution width:\(result.streamWidth) heigh:\(result.streamHeight) video " + "bitrate:\(result.videoBitrate) audio bitrate:\(result.audioBitrate) codec:\(result.videoCodec)");
         }
     }
     
     func streamIdToPublish(streamId: String) {
-        AntMediaClient.printf("Joined the room and stream Id to publish is \(streamId)")
+        printf("Joined the room and stream Id to publish is \(streamId)")
     }
     
     /**
@@ -269,7 +269,7 @@ public extension AntMediaClientDelegate {
      */
     func newStreamsJoined(streams: [String]) {
         for stream in streams {
-            AntMediaClient.printf("New stream in the room: \(stream)")
+            printf("New stream in the room: \(stream)")
         }
     }
     
@@ -279,21 +279,25 @@ public extension AntMediaClientDelegate {
      */
     func streamsLeft(streams: [String]) {
         for stream in streams {
-            AntMediaClient.printf("Stream: \(stream) left from the room")
+            printf("Stream: \(stream) left from the room")
         }
     }
     
     func onLoadBroadcastObject(streamId: String, message: [String: Any]) {
-        AntMediaClient.printf("onLoadBroadcastObject is called for \(streamId) and incoming response: \(message)")
+        printf("onLoadBroadcastObject is called for \(streamId) and incoming response: \(message)")
     }
     
     func eventHappened(streamId:String, eventType:String, payload: [String:Any]?) {
-        AntMediaClient.printf("\(streamId) \(eventType) with")
-        AntMediaClient.printf(payload?.json ?? "")
+        printf("\(streamId) \(eventType) with")
+        printf(payload?.json ?? "")
     }
     
     func onStats(streamId:String, statistics:RTCStatisticsReport) {
-        AntMediaClient.printf("streamId: \(streamId) stats received")
+        printf("streamId: \(streamId) stats received")
+    }
+    
+    func printf(_ msg: String) {
+        debugPrint("--> AntMediaSDK: " + msg)
     }
     
 }

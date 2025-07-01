@@ -175,7 +175,7 @@ class RTCCustomFrameCapturer: RTCVideoCapturer {
                     }
                 } completionHandler: { (error) in
                     guard error == nil else {
-                        AntMediaClient.printf("Screen capturer is not started")
+                        print("Screen capturer is not started")
                         return;
                     }
                 }
@@ -193,7 +193,7 @@ class RTCCustomFrameCapturer: RTCVideoCapturer {
                  if #available(iOS 11.0, *) {
                      recorder.stopCapture { (error) in
                          guard error == nil else {
-                             AntMediaClient.printf("Cannot stop capture \(String(describing: error))");
+                             print("Cannot stop capture \(String(describing: error))");
                              return;
                          }
                      }

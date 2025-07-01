@@ -104,7 +104,7 @@ class WelcomeViewController: UIViewController {
                 return
             }
             
-            AntMediaClient.printf("Text field: \(textValue)")
+            print("Text field: \(textValue)")
             self.serverButton.setTitle("Server ip: \(textValue)", for: .normal)
             
             Defaults[.server] = textValue

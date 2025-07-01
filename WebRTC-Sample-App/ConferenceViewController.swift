@@ -45,8 +45,8 @@ open class ConferenceViewController: UIViewController ,  AVCaptureVideoDataOutpu
         collectionView.dataSource = self
         collectionView.delegate = self
         
-        AntMediaClient.setDebug(true)
-        self.conferenceClient =  AntMediaClient.init();
+//        AntMediaClient.setDebug(true)
+        self.conferenceClient = AntMediaClient()
         self.conferenceClient?.setRTCFile(name: "VideoSample.mp4")
         self.conferenceClient?.delegate = self
         self.conferenceClient?.setWebSocketServerUrl(url: self.clientUrl)
@@ -125,7 +125,7 @@ extension ConferenceViewController: AntMediaClientDelegate {
     
     public func trackAdded(track: RTCMediaStreamTrack, stream: [RTCMediaStream]) {
         
-        AntMediaClient.printf("Track is added with id:\(track.trackId), streamID: \(stream.first?.streamId) ")
+        print("Track is added with id:\(track.trackId), streamID: \(stream.first?.streamId) ")
         if let videoTrack = track as? RTCVideoTrack {
             remoteViewTrackMap.append(videoTrack)
             Run.onMainThread {
@@ -155,7 +155,7 @@ extension ConferenceViewController: AntMediaClientDelegate {
     }
     
     public func publishStarted(streamId: String) {
-        AntMediaClient.printf("Publish started for stream:\(streamId)")
+        print("Publish started for stream:\(streamId)")
                 
         //this plays the streams in the room
         self.conferenceClient?.play(streamId: self.roomId);
@@ -165,11 +165,11 @@ extension ConferenceViewController: AntMediaClientDelegate {
     }
     
     public func publishFinished(streamId: String) {
-        AntMediaClient.printf("Publish finished for stream:\(streamId)")
+        print("Publish finished for stream:\(streamId)")
     }
     
     public func videoView(_ videoView: RTCVideoRenderer, didChangeVideoSize size: CGSize) {
-        AntMediaClient.printf("Video size changed to " + String(Int(size.width)) + "x" + String(Int(size.height)) + ". These changes are not handled in Simulator for now")
+        print("Video size changed to " + String(Int(size.width)) + "x" + String(Int(size.height)) + ". These changes are not handled in Simulator for now")
     }
     
     public func onLoadBroadcastObject(streamId: String, message: [String : Any]) {

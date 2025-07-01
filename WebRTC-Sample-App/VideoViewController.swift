@@ -119,12 +119,12 @@ class VideoViewController: UIViewController {
         sender.isSelected = !sender.isSelected
         
         if (self.client?.getCurrentMode() == .play) {
-            AntMediaClient.printf("It's in play mode and calling to mute/unmute the incoming stream with enableAudioTrack:\(!sender.isSelected) ");
+            print("It's in play mode and calling to mute/unmute the incoming stream with enableAudioTrack:\(!sender.isSelected) ");
             //mute/unmute the incoming stream audio
             self.client?.enableAudioTrack(trackId: self.clientStreamId, enabled: !sender.isSelected);
         }
         else {
-            AntMediaClient.printf("It's in publis mode and calling to mute/unmute the local audio to send");
+            print("It's in publis mode and calling to mute/unmute the local audio to send");
 
             //mute/unmute the microphone for the publisher
             let toggleAudio = !sender.isSelected
@@ -302,7 +302,7 @@ extension VideoViewController: AntMediaClientDelegate {
     }
     
     func dataReceivedFromDataChannel(streamId: String, data: Data, binary: Bool) {
-        AntMediaClient.printf("Data is received from stream: \(streamId) is binary:\(binary) content: " + String(decoding: data, as: UTF8.self))
+        print("Data is received from stream: \(streamId) is binary:\(binary) content: " + String(decoding: data, as: UTF8.self))
         
         Run.onMainThread {
             self.showToast(controller: self, message:  String(decoding: data, as: UTF8.self), seconds: 1.0)
@@ -311,9 +311,9 @@ extension VideoViewController: AntMediaClientDelegate {
     }
     
     func streamInformation(streamInfo: [StreamInformation]) {
-        AntMediaClient.printf("Incoming stream infos")
+        print("Incoming stream infos")
         for result in streamInfo {
-            AntMediaClient.printf("resolution width:\(result.streamWidth) heigh:\(result.streamHeight) video " + "bitrate:\(result.videoBitrate) audio bitrate:\(result.audioBitrate) codec:\(result.videoCodec)");
+            print("resolution width:\(result.streamWidth) heigh:\(result.streamHeight) video " + "bitrate:\(result.videoBitrate) audio bitrate:\(result.audioBitrate) codec:\(result.videoCodec)");
         }
     }
     

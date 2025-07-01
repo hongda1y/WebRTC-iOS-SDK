@@ -18,7 +18,7 @@ class WebRTCClient: NSObject {
     let LOCAL_MEDIA_STREAM_ID = "STREAM"
     
     private var audioDeviceModule: RTCAudioDeviceModule? = nil;
-    private static var factory: RTCPeerConnectionFactory! = nil;
+    private var factory: RTCPeerConnectionFactory? = nil;
     
     weak var delegate: WebRTCClientDelegate?
     var peerConnection : RTCPeerConnection?
@@ -89,13 +89,13 @@ class WebRTCClient: NSObject {
         self.audioDeviceModule = RTCAudioDeviceModule();
         self.audioDeviceModule?.setExternalAudio(externalAudio)
             
-        WebRTCClient.factory = initFactory();
+        factory = initFactory()
         
         let stunServer = Config.defaultStunServer()
         let defaultConstraint = Config.createDefaultConstraint()
         let configuration = Config.createConfiguration(server: stunServer)
         
-        self.peerConnection = WebRTCClient.factory.peerConnection(with: configuration, constraints: defaultConstraint, delegate: self)
+        self.peerConnection = factory?.peerConnection(with: configuration, constraints: defaultConstraint, delegate: self)
     }
     
     public convenience init(remoteVideoView: RTCVideoRenderer?, localVideoView: RTCVideoRenderer?, delegate: WebRTCClientDelegate, mode: AntMediaClientMode, cameraPosition: AVCaptureDevice.Position, targetWidth: Int, targetHeight: Int, streamId: String) {
@@ -147,17 +147,15 @@ class WebRTCClient: NSObject {
     }
     
     public func setMaxVideoBps(maxVideoBps:NSNumber) {
-        AntMediaClient.printf("In setMaxVideoBps:\(maxVideoBps)")
+        printf("In setMaxVideoBps:\(maxVideoBps)")
         if (maxVideoBps.intValue > 0) {
-            AntMediaClient.printf("setMaxVideoBps:\(maxVideoBps)")
+            printf("setMaxVideoBps:\(maxVideoBps)")
             self.peerConnection?.setBweMinBitrateBps(nil, currentBitrateBps: nil, maxBitrateBps: maxVideoBps)
         }
     }
     
     public func getStats(handler: @escaping (RTCStatisticsReport) -> Void) {
-        
-        
-        self.peerConnection?.statistics(completionHandler: handler);
+        peerConnection?.statistics(completionHandler: handler)
     }
     
     public func setStreamId(_ streamId: String) {
@@ -169,20 +167,20 @@ class WebRTCClient: NSObject {
     }
     
     public func setRemoteDescription(_ description: RTCSessionDescription, completionHandler: @escaping RTCSetSessionDescriptionCompletionHandler) {
-        self.peerConnection?.setRemoteDescription(description, completionHandler: completionHandler)
+        peerConnection?.setRemoteDescription(description, completionHandler: completionHandler)
     }
     
     public func addCandidate(_ candidate: RTCIceCandidate) {
-        self.peerConnection?.add(candidate)
+        peerConnection?.add(candidate)
     }
     
     public func sendData(data: Data, binary: Bool = false) {
-        if (self.dataChannel?.readyState == .open) {
-            let dataBuffer = RTCDataBuffer.init(data: data, isBinary: binary);
-            self.dataChannel?.sendData(dataBuffer);
+        if dataChannel?.readyState == .open {
+            let dataBuffer = RTCDataBuffer.init(data: data, isBinary: binary)
+            dataChannel?.sendData(dataBuffer)
         }
         else {
-            AntMediaClient.printf("Data channel is nil or state is not open. State is \(String(describing: self.dataChannel?.readyState)) Please check that data channel is enabled in server side ")
+            printf("Data channel is nil or state is not open. State is \(String(describing: self.dataChannel?.readyState)) Please check that data channel is enabled in server side ")
         }
     }
     
@@ -193,22 +191,24 @@ class WebRTCClient: NSObject {
     
     public func sendAnswer() {
         let constraint = Config.createAudioVideoConstraints()
-        self.peerConnection?.answer(for: constraint, completionHandler: { (sdp, error) in
-            if (error != nil) {
-                AntMediaClient.printf("Error (sendAnswer): " + error!.localizedDescription)
+        peerConnection?.answer(for: constraint, completionHandler: { [weak self] sdp, error in
+            guard let self else { return }
+            
+            if error != nil {
+                printf("Error (sendAnswer): " + error!.localizedDescription)
             } else {
-                AntMediaClient.printf("Got your answer")
-                if (sdp?.type == RTCSdpType.answer) {
-                    self.peerConnection?.setLocalDescription(sdp!, completionHandler: {
-                        (error) in
-                        if (error != nil) {
-                            AntMediaClient.printf("Error (sendAnswer/closure): " + error!.localizedDescription)
+                printf("Got your answer")
+                if sdp?.type == RTCSdpType.answer {
+                    
+                    peerConnection?.setLocalDescription(sdp!, completionHandler: { [weak self] error in
+                        if error != nil {
+                            self?.printf("Error (sendAnswer/closure): " + error!.localizedDescription)
                         }
                     })
                     
                     var answerDict = [String: Any]()
                     
-                    if (self.token.isEmpty) {
+                    if self.token.isEmpty {
                         answerDict =  ["type": "answer",
                                        "command": "takeConfiguration",
                                        "sdp": sdp!.sdp,
@@ -217,11 +217,11 @@ class WebRTCClient: NSObject {
                         answerDict =  ["type": "answer",
                                        "command": "takeConfiguration",
                                        "sdp": sdp!.sdp,
-                                       "streamId": self.streamId!,
-                                       "token": self.token] as [String : Any]
+                                       "streamId": streamId ?? "",
+                                       "token": token ?? ""] as [String : Any]
                     }
                     
-                    self.delegate?.sendMessage(answerDict)
+                    delegate?.sendMessage(answerDict)
                 }
             }
         })
@@ -231,77 +231,78 @@ class WebRTCClient: NSObject {
         
         //let the one who creates offer also create data channel.
         //by doing that it will work both in publish-play and peer-to-peer mode
-        if (enableDataChannel) {
-            self.dataChannel = createDataChannel()
-            self.dataChannel?.delegate = self
+        if enableDataChannel {
+            dataChannel = createDataChannel()
+            dataChannel?.delegate = self
         }
         
         let constraint = Config.createAudioVideoConstraints()
 
-        self.peerConnection?.offer(for: constraint, completionHandler: { (sdp, error) in
-            if (sdp?.type == RTCSdpType.offer) {
-                AntMediaClient.printf("Got your offer")
+        peerConnection?.offer(for: constraint, completionHandler: { [weak self] sdp, error in
+            guard let self else { return }
+            
+            if sdp?.type == RTCSdpType.offer {
+                printf("Got your offer")
                 
-                self.peerConnection?.setLocalDescription(sdp!, completionHandler: {
-                    (error) in
-                    if (error != nil) {
-                        AntMediaClient.printf("Error (createOffer): " + error!.localizedDescription)
+                peerConnection?.setLocalDescription(sdp!, completionHandler: { [weak self] error in
+                    if error != nil {
+                        self?.printf("Error (createOffer): " + error!.localizedDescription)
                     }
                 })
                 
-                AntMediaClient.printf("offer sdp: " + sdp!.sdp)
+                printf("offer sdp: " + sdp!.sdp)
                 var offerDict = [String: Any]()
                 
-                if (self.token.isEmpty) {
+                if token.isEmpty {
                     offerDict =  ["type": "offer",
                                   "command": "takeConfiguration",
                                   "sdp": sdp!.sdp,
                                   "streamId": self.streamId!] as [String : Any]
                 } else {
                     offerDict =  ["type": "offer",
-                                      "command": "takeConfiguration",
-                                      "sdp": sdp!.sdp,
-                                      "streamId": self.streamId!,
-                                      "token": self.token] as [String : Any]
+                                  "command": "takeConfiguration",
+                                  "sdp": sdp!.sdp,
+                                  "streamId": streamId ?? "",
+                                  "token": token ?? ""] as [String : Any]
                 }
                 
-                self.delegate?.sendMessage(offerDict)
+                delegate?.sendMessage(offerDict)
             }
         })
     }
     
     public func stop() {
-        disconnect();
-        
+        disconnect()
     }
     
     private func createDataChannel() -> RTCDataChannel? {
         let config = RTCDataChannelConfiguration()
         guard let dataChannel = self.peerConnection?.dataChannel(forLabel: "WebRTCData", configuration: config) else {
-            AntMediaClient.printf("Warning: Couldn't create data channel.")
+            printf("Warning: Couldn't create data channel.")
             return nil
         }
         return dataChannel
     }
 
     public func disconnect() {
-        AntMediaClient.printf("disconnecting and releasing resources for \(streamId)")
+        printf("disconnecting and releasing resources for \(streamId)")
         //TODO: how to clear all resources
         
         if let view = self.localVideoView {
             self.localVideoTrack?.remove(view)
         }
+        
         if let view = self.remoteVideoView {
             self.remoteVideoTrack?.remove(view)
         }
+        
         self.remoteVideoView?.renderFrame(nil)
         self.localVideoTrack = nil
         self.remoteVideoTrack = nil
         
         if self.videoCapturer is RTCCameraVideoCapturer {
             (self.videoCapturer as? RTCCameraVideoCapturer)?.stopCapture()
-        }
-        else if self.videoCapturer is RTCCustomFrameCapturer {
+        } else if self.videoCapturer is RTCCustomFrameCapturer {
             (self.videoCapturer as? RTCCustomFrameCapturer)?.stopCapture()
         } else if self.videoCapturer is RTCFileVideoCapturer {
             (self.videoCapturer as? RTCFileVideoCapturer)?.stopCapture()
@@ -309,10 +310,17 @@ class WebRTCClient: NSObject {
         
         self.videoCapturer = nil;
         
+        dataChannel?.delegate = nil
+        dataChannel?.close()
+        
+        if let videoSender {
+            self.peerConnection?.removeTrack(videoSender)
+            self.videoSender = nil
+        }
         
         self.peerConnection?.close()
         self.peerConnection = nil;
-        AntMediaClient.printf("disconnected and released resources for \(streamId)")
+        printf("disconnected and released resources for \(streamId)")
     }
     
     public func toggleAudioEnabled() {
@@ -385,7 +393,7 @@ class WebRTCClient: NSObject {
                 
                 let dimension = CMVideoFormatDescriptionGetDimensions(selectedFormat!.formatDescription)
                 
-                AntMediaClient.printf("Camera resolution: " + String(dimension.width) + "x" + String(dimension.height)
+                printf("Camera resolution: " + String(dimension.width) + "x" + String(dimension.height)
                                       + " fps: " + String(fps))
                 
                 let cameraVideoCapturer = self.videoCapturer as? RTCCameraVideoCapturer;
@@ -403,11 +411,11 @@ class WebRTCClient: NSObject {
                 return true
             }
             else {
-                AntMediaClient.printf("Cannot open camera not suitable format")
+                printf("Cannot open camera not suitable format")
             }
         }
         else {
-            AntMediaClient.printf("Not Camera Found")
+            printf("Not Camera Found")
         }
         
         return false;
@@ -416,17 +424,19 @@ class WebRTCClient: NSObject {
     
     private func createVideoTrack() -> RTCVideoTrack?  {
         
+        guard let factory else { return nil }
+        
         if useExternalCameraSource {
             //try with screencast video source
-            let videoSource = WebRTCClient.factory.videoSource(forScreenCast: true)
+            let videoSource = factory.videoSource(forScreenCast: true)
             videoCapturer = RTCCustomFrameCapturer.init(delegate: videoSource, height: targetHeight, externalCapture: externalVideoCapture, videoEnabled: videoEnabled, audioEnabled: externalAudio, fps:self.cameraSourceFPS);
             
             (videoCapturer as? RTCCustomFrameCapturer)?.setWebRTCClient(webRTCClient: self)
             (videoCapturer as? RTCCustomFrameCapturer)?.startCapture()
-            let videoTrack = WebRTCClient.factory.videoTrack(with: videoSource, trackId: "video0")
+            let videoTrack = factory.videoTrack(with: videoSource, trackId: "video0")
             return videoTrack
         } else {
-            var videoSource = WebRTCClient.factory.videoSource()
+            var videoSource = factory.videoSource()
             #if targetEnvironment(simulator)
             videoCapturer = RTCFileVideoCapturer(delegate: videoSource)
             let captureStarted = startCapture()
@@ -458,7 +468,7 @@ class WebRTCClient: NSObject {
             }
             #endif
             
-            let videoTrack = WebRTCClient.factory.videoTrack(with: videoSource, trackId: "video0")
+            let videoTrack = factory.videoTrack(with: videoSource, trackId: "video0")
             videoTrack.isEnabled = isVideoEnabled()
             return videoTrack
         }
@@ -468,8 +478,9 @@ class WebRTCClient: NSObject {
     @discardableResult
     private func addLocalMediaStream() -> Bool {
         
+        guard let factory else { return false }
         
-        AntMediaClient.printf("Add local media streams")
+        printf("Add local media streams")
 //        if (self.videoEnabled)
 //        {
 //        #if targetEnvironment(simulator)
@@ -484,13 +495,13 @@ class WebRTCClient: NSObject {
                 videoSender?.parameters = params
             }
             else {
-                AntMediaClient.printf("DegradationPreference cannot be set");
+                printf("DegradationPreference cannot be set");
             }
 //        #endif
 //        }
             
-        let audioSource = WebRTCClient.factory.audioSource(with: Config.createTestConstraints())
-        self.localAudioTrack = WebRTCClient.factory.audioTrack(with: audioSource, trackId: AUDIO_TRACK_ID)
+        let audioSource = factory.audioSource(with: Config.createTestConstraints())
+        self.localAudioTrack = factory.audioTrack(with: audioSource, trackId: AUDIO_TRACK_ID)
         
         self.peerConnection?.add(self.localAudioTrack, streamIds: [LOCAL_MEDIA_STREAM_ID])
         
@@ -594,16 +605,16 @@ extension WebRTCClient: RTCDataChannelDelegate
         delegate?.rtcDataChannelDidChangeState(parametersdataChannel.readyState)
         
         if (parametersdataChannel.readyState == .open) {
-            AntMediaClient.printf("Data channel state is open")
+            printf("Data channel state is open")
         }
         else if  (parametersdataChannel.readyState == .connecting) {
-            AntMediaClient.printf("Data channel state is connecting")
+            printf("Data channel state is connecting")
         }
         else if  (parametersdataChannel.readyState == .closing) {
-            AntMediaClient.printf("Data channel state is closing")
+            printf("Data channel state is closing")
         }
         else if  (parametersdataChannel.readyState == .closed) {
-            AntMediaClient.printf("Data channel state is closed")
+            printf("Data channel state is closed")
         }
     }
     
@@ -618,48 +629,48 @@ extension WebRTCClient: RTCPeerConnectionDelegate {
     
     // signalingStateChanged
     func peerConnection(_ peerConnection: RTCPeerConnection, didChange stateChanged: RTCSignalingState) {
-        //AntMediaClient.printf("---> StateChanged:\(stateChanged.rawValue)")
+        //printf("---> StateChanged:\(stateChanged.rawValue)")
     }
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didAdd rtpReceiver: RTCRtpReceiver, streams mediaStreams: [RTCMediaStream]) {
         
         
-        AntMediaClient.printf("didAdd track:\(String(describing: rtpReceiver.track?.kind)) media streams count:\(mediaStreams.count) ")
+        printf("didAdd track:\(String(describing: rtpReceiver.track?.kind)) media streams count:\(mediaStreams.count) ")
         
         if let track = rtpReceiver.track {
             self.delegate?.trackAdded(track:track, stream:mediaStreams);
         }
         else {
-            AntMediaClient.printf("New track added but it's nil")
+            printf("New track added but it's nil")
         }
         
     }
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didRemove rtpReceiver: RTCRtpReceiver) {
-        AntMediaClient.printf("didRemove track:\(String(describing: rtpReceiver.track?.kind))")
+        printf("didRemove track:\(String(describing: rtpReceiver.track?.kind))")
         
         if let track = rtpReceiver.track {
             self.delegate?.trackRemoved(track:track);
         }
         else {
-            AntMediaClient.printf("New track removed but it's nil")
+            printf("New track removed but it's nil")
         }
     }
     
     // addedStream
     func peerConnection(_ peerConnection: RTCPeerConnection, didAdd stream: RTCMediaStream) {
         
-        AntMediaClient.printf("addedStream. Stream has \(stream.videoTracks.count) video tracks and \(stream.audioTracks.count) audio tracks");
+        printf("addedStream. Stream has \(stream.videoTracks.count) video tracks and \(stream.audioTracks.count) audio tracks");
        
         if (stream.videoTracks.count == 1)
         {
-            AntMediaClient.printf("stream has video track");
+            printf("stream has video track");
             if (remoteVideoView != nil) {
                 remoteVideoTrack = stream.videoTracks[0]
                 
                 //remoteVideoTrack.setEnabled(true)
                 remoteVideoTrack.add(remoteVideoView!)
-                AntMediaClient.printf("Has delegate??? (signalingStateChanged): \(String(describing: self.delegate))")
+                printf("Has delegate??? (signalingStateChanged): \(String(describing: self.delegate))")
             }
         }
 
@@ -669,7 +680,7 @@ extension WebRTCClient: RTCPeerConnectionDelegate {
     
     // removedStream
     func peerConnection(_ peerConnection: RTCPeerConnection, didRemove stream: RTCMediaStream) {
-        AntMediaClient.printf("RemovedStream")
+        printf("RemovedStream")
         delegate?.remoteStreamRemoved(streamId: self.streamId);
         remoteVideoTrack = nil
         remoteAudioTrack = nil
@@ -688,19 +699,19 @@ extension WebRTCClient: RTCPeerConnectionDelegate {
     
     // iceConnectionChanged
     func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceConnectionState) {
-        AntMediaClient.printf("---> iceConnectionChanged: \(newState.rawValue) for stream: \(String(describing: self.streamId))")
+        printf("---> iceConnectionChanged: \(newState.rawValue) for stream: \(String(describing: self.streamId))")
         self.iceConnectionState = newState;
         self.delegate?.connectionStateChanged(newState: newState, streamId:self.streamId)
     }
     
     // iceGatheringChanged
     func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceGatheringState) {
-        //AntMediaClient.printf("---> iceGatheringChanged")
+        //printf("---> iceGatheringChanged")
     }
     
     // didOpen dataChannel
     func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {
-        AntMediaClient.printf("---> dataChannel opened")
+        printf("---> dataChannel opened")
         self.dataChannel = dataChannel
         self.dataChannel?.delegate = self
         
@@ -708,10 +719,16 @@ extension WebRTCClient: RTCPeerConnectionDelegate {
     
     
     func peerConnectionShouldNegotiate(_ peerConnection: RTCPeerConnection) {
-        //AntMediaClient.printf("---> peerConnectionShouldNegotiate")
+        //printf("---> peerConnectionShouldNegotiate")
     }
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didRemove candidates: [RTCIceCandidate]) {
-        //AntMediaClient.printf("---> didRemove")
+        //printf("---> didRemove")
+    }
+}
+
+extension WebRTCClient {
+    func printf(_ msg: String) {
+        debugPrint("--> AntMediaSDK: " + msg)
     }
 }
