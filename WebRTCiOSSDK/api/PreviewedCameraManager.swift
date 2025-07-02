@@ -33,6 +33,8 @@ public class PreviewedCameraManager: NSObject {
     private var frameDropCount = 0
     private let maxConsecutiveDrops = 5
     
+    private var videoConnection: AVCaptureConnection?
+    
     private var isCameraAvailable: Bool = true
     
     // Frame rate limiting
@@ -53,9 +55,11 @@ public class PreviewedCameraManager: NSObject {
         
         super.init()
         setupCaptureSession()
+        startOrientationNotifications()
     }
     
     deinit {
+        stopOrientationNotifications()
         stopCapture()
         cleanupResources()
     }
@@ -184,6 +188,69 @@ public class PreviewedCameraManager: NSObject {
         captureSession.commitConfiguration()
     }
     
+    private func startOrientationNotifications() {
+        UIDevice.current.beginGeneratingDeviceOrientationNotifications()
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(deviceOrientationDidChange),
+                                               name: UIDevice.orientationDidChangeNotification,
+                                               object: nil)
+    }
+    
+    private func stopOrientationNotifications() {
+        NotificationCenter.default.removeObserver(self,
+                                                  name: UIDevice.orientationDidChangeNotification,
+                                                  object: nil)
+        UIDevice.current.endGeneratingDeviceOrientationNotifications()
+    }
+    
+    @objc private func deviceOrientationDidChange() {
+        updateConnectionOrientation()
+    }
+    
+    private func updateConnectionOrientation() {
+        guard let connection = self.videoConnection, connection.isVideoOrientationSupported else { return }
+        
+        let currentDeviceOrientation = UIDevice.current.orientation
+        let videoOrientation: AVCaptureVideoOrientation
+        
+        // Map device orientation to video orientation for the connection
+        switch currentDeviceOrientation {
+        case .portrait:
+            videoOrientation = .portrait
+        case .portraitUpsideDown:
+            videoOrientation = .portraitUpsideDown
+        case .landscapeLeft: // Device is rotated left, Home button on right
+            videoOrientation = .landscapeRight // Camera frame needs to be landscapeRight to appear upright
+        case .landscapeRight: // Device is rotated right, Home button on left
+            videoOrientation = .landscapeLeft // Camera frame needs to be landscapeLeft to appear upright
+        default:
+            // .unknown, .faceUp, .faceDown - keep current or default to portrait
+            videoOrientation = .portrait // Or connection.videoOrientation if it was already set
+        }
+        
+        // Apply the video orientation to the connection
+        // For iOS 17+, prefer videoRotationAngle
+        if #available(iOS 17.0, *) {
+            let rotationAngle: CGFloat
+            switch videoOrientation {
+            case .portrait:
+                rotationAngle = 90
+            case .portraitUpsideDown:
+                rotationAngle = 270
+            case .landscapeLeft:
+                rotationAngle = 0 // Assuming native sensor is landscape left
+            case .landscapeRight:
+                rotationAngle = 180
+            default:
+                rotationAngle = 0
+            }
+            connection.videoRotationAngle = rotationAngle
+        } else {
+            // Fallback for older iOS versions
+            connection.videoOrientation = videoOrientation
+        }
+    }
+    
     private func configureCameraInput(position: AVCaptureDevice.Position) {
         // Remove existing input
         if let currentInput = videoInput {
@@ -242,6 +309,16 @@ public class PreviewedCameraManager: NSObject {
         
         // Configure output properties for better memory management
         videoDataOutput.alwaysDiscardsLateVideoFrames = true
+        
+        if let connection = videoDataOutput.connection(with: .video) {
+            self.videoConnection = connection // Store the connection
+            if connection.isVideoOrientationSupported {
+                updateConnectionOrientation()
+            }
+            
+        } else {
+            print("Failed to get video connection for output.")
+        }
         
         // Add output to session
         if captureSession.canAddOutput(videoDataOutput) {

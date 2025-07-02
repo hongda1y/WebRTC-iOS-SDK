@@ -297,8 +297,13 @@ class WebRTCClient: NSObject {
         }
         
         self.remoteVideoView?.renderFrame(nil)
+        self.localVideoView?.renderFrame(nil)
+        
         self.localVideoTrack = nil
         self.remoteVideoTrack = nil
+        
+        self.localAudioTrack = nil
+        self.remoteAudioTrack = nil
         
         if self.videoCapturer is RTCCameraVideoCapturer {
             (self.videoCapturer as? RTCCameraVideoCapturer)?.stopCapture()
@@ -310,16 +315,24 @@ class WebRTCClient: NSObject {
         
         self.videoCapturer = nil;
         
+        self.pipe = nil
+        
         dataChannel?.delegate = nil
         dataChannel?.close()
+        dataChannel = nil
         
         if let videoSender {
             self.peerConnection?.removeTrack(videoSender)
             self.videoSender = nil
         }
         
+        self.peerConnection?.delegate = nil
         self.peerConnection?.close()
         self.peerConnection = nil;
+        
+        self.audioDeviceModule?.setExternalAudio(false)
+        self.audioDeviceModule = nil
+        
         printf("disconnected and released resources for \(streamId)")
     }
     
@@ -489,14 +502,14 @@ class WebRTCClient: NSObject {
 
             self.videoSender = self.peerConnection?.add(self.localVideoTrack,  streamIds: [LOCAL_MEDIA_STREAM_ID])
             
-            if let params = videoSender?.parameters 
-            {
+            if let params = videoSender?.parameters {
                 params.degradationPreference = (self.degradationPreference.rawValue) as NSNumber
                 videoSender?.parameters = params
-            }
-            else {
+            } else {
                 printf("DegradationPreference cannot be set");
             }
+        
+            
 //        #endif
 //        }
             

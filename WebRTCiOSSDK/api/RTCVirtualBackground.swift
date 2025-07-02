@@ -272,7 +272,6 @@ public class RTCVirtualBackground: NSObject {
                 try handler.perform([personMaskRequest])
                 
                 let observation = personMaskRequest.results?.first
-                let allInstances = observation?.allInstances
                 
                 var maskedImage: CVPixelBuffer?
                 if let observation = personMaskRequest.results?.first {

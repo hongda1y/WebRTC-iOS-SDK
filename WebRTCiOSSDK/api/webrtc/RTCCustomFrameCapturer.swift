@@ -14,23 +14,22 @@ class RTCCustomFrameCapturer: RTCVideoCapturer {
     
     let kNanosecondsPerSecond: Float64 = 1000000000
     var nanoseconds: Float64 = 0
-    var lastSentFrameTimeStampNanoSeconds: Int64 = 0;
+    var lastSentFrameTimeStampNanoSeconds: Int64 = 0
     private var targetHeight: Int
         
-    private var videoEnabled: Bool = true;
-    private var audioEnabled: Bool = true;
+    private var videoEnabled: Bool = true
+    private var audioEnabled: Bool = true
+
+    private weak var webRTCClient: WebRTCClient?
     
-    private var webRTCClient: WebRTCClient?;
-    
-    private var frameRateIntervalNanoSeconds : Float64 = 0;
+    private var frameRateIntervalNanoSeconds : Float64 = 0
     
     
     // if externalCapture is true, it means that capture method is called from an external component.
     // externalComponent is the BroadcastExtension
-    private var externalCapture: Bool;
-    
-    private var fps: Int;
-    
+    private var externalCapture: Bool
+
+    private var fps: Int
     
     init(delegate: RTCVideoCapturerDelegate, height: Int, externalCapture: Bool = false, videoEnabled: Bool = true, audioEnabled: Bool = false, fps: Int = 30)
     {
@@ -38,10 +37,10 @@ class RTCCustomFrameCapturer: RTCVideoCapturer {
         self.externalCapture = externalCapture;
         
         //if external capture is enabled videoEnabled and audioEnabled are ignored
-        self.videoEnabled = videoEnabled;
-        self.audioEnabled = audioEnabled;
-        self.frameRateIntervalNanoSeconds = kNanosecondsPerSecond/Double(fps);
-        self.fps = fps;
+        self.videoEnabled = videoEnabled
+        self.audioEnabled = audioEnabled
+        self.frameRateIntervalNanoSeconds = kNanosecondsPerSecond/Double(fps)
+        self.fps = fps
             
         super.init(delegate: delegate)
         
@@ -54,8 +53,8 @@ class RTCCustomFrameCapturer: RTCVideoCapturer {
     public func capture(_ pixelBuffer: CVPixelBuffer, rotation:RTCVideoRotation, timeStampNs: Int64 )
     {
         if ((Double(timeStampNs) - Double(lastSentFrameTimeStampNanoSeconds)) < frameRateIntervalNanoSeconds ) {
-            AntMediaClient.verbose("Dropping frame because high fps than the configured fps: \(fps). Incoming timestampNs:\(timeStampNs) last sent timestampNs:\(lastSentFrameTimeStampNanoSeconds) frameRateIntervalNs:\(frameRateIntervalNanoSeconds)");
-            return;
+            print("AntMediaSDK[verbose]: Dropping frame because high fps than the configured fps: \(fps). Incoming timestampNs:\(timeStampNs) last sent timestampNs:\(lastSentFrameTimeStampNanoSeconds) frameRateIntervalNs:\(frameRateIntervalNanoSeconds)")
+            return
             
         }
         
@@ -87,31 +86,27 @@ class RTCCustomFrameCapturer: RTCVideoCapturer {
     }
     
     public func capture(_ sampleBuffer: CMSampleBuffer, externalRotation:Int = -1) {
-        
         if (CMSampleBufferGetNumSamples(sampleBuffer) != 1 || !CMSampleBufferIsValid(sampleBuffer) ||
-            !CMSampleBufferDataIsReady(sampleBuffer))
-        {
-            NSLog("Buffer is not ready and dropping");
-            return;
+            !CMSampleBufferDataIsReady(sampleBuffer)) {
+            NSLog("Buffer is not ready and dropping")
+            return
         }
         
         let timeStampNs = CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(sampleBuffer)) *
-            kNanosecondsPerSecond;
+            kNanosecondsPerSecond
                 
         if ((Double(timeStampNs) - Double(lastSentFrameTimeStampNanoSeconds)) < frameRateIntervalNanoSeconds ) {
-            AntMediaClient.verbose("Dropping frame because high fps than the configured fps: \(fps). Incoming timestampNs:\(timeStampNs) last sent timestampNs:\(lastSentFrameTimeStampNanoSeconds) frameRateIntervalNs:\(frameRateIntervalNanoSeconds)");
-            return;
+            print("AntMediaSDK[verbose]: Dropping frame because high fps than the configured fps: \(fps). Incoming timestampNs:\(timeStampNs) last sent timestampNs:\(lastSentFrameTimeStampNanoSeconds) frameRateIntervalNs:\(frameRateIntervalNanoSeconds)")
+            return
             
         }
         
-        let _pixelBuffer:CVPixelBuffer? = CMSampleBufferGetImageBuffer(sampleBuffer);
+        let _pixelBuffer:CVPixelBuffer? = CMSampleBufferGetImageBuffer(sampleBuffer)
         
-        
-        if let pixelBuffer = _pixelBuffer
-        {
+        if let pixelBuffer = _pixelBuffer {
             //NSLog("Incoming frame width:\(width) height:\(height) adapted width:\(scaledWidth) height:\(self.targetHeight)")
             
-            var rotation = RTCVideoRotation._0;
+            var rotation = RTCVideoRotation._0
             if (externalRotation == -1) {
                 if #available(iOS 11.0, *) {
                     if let orientationAttachment =  CMGetAttachment(sampleBuffer, key: RPVideoSampleOrientationKey as CFString, attachmentModeOut: nil) as? NSNumber
@@ -119,20 +114,20 @@ class RTCCustomFrameCapturer: RTCVideoCapturer {
                         let orientation = CGImagePropertyOrientation(rawValue: orientationAttachment.uint32Value)
                         switch orientation {
                         case .up:
-                            rotation = RTCVideoRotation._0;
+                            rotation = RTCVideoRotation._0
                             break;
                         case .down:
-                            rotation = RTCVideoRotation._180;
+                            rotation = RTCVideoRotation._180
                             break;
                         case .left:
-                            rotation = RTCVideoRotation._90;
+                            rotation = RTCVideoRotation._90
                             break;
                         case .right:
-                            rotation = RTCVideoRotation._270;
+                            rotation = RTCVideoRotation._270
                             break;
                             
                         default:
-                            NSLog("orientation NOT FOUND");
+                            NSLog("orientation NOT FOUND")
                         }
                     }
                     else {
@@ -144,7 +139,7 @@ class RTCCustomFrameCapturer: RTCVideoCapturer {
                 }
             }
             else {
-                rotation = RTCVideoRotation(rawValue:externalRotation) ?? RTCVideoRotation._0;
+                rotation = RTCVideoRotation(rawValue:externalRotation) ?? RTCVideoRotation._0
             }
 
             
@@ -152,25 +147,23 @@ class RTCCustomFrameCapturer: RTCVideoCapturer {
             //NSLog("Device orientation width: %d, height:%d ", width, height);
         }
         else {
-            NSLog("Cannot get image buffer");
+            NSLog("Cannot get image buffer")
         }
         
     }
     
-    public func startCapture()
-    {
-        if !externalCapture
-        {
-            let recorder = RPScreenRecorder.shared();
+    public func startCapture() {
+        if !externalCapture {
+            let recorder = RPScreenRecorder.shared()
            
             if #available(iOS 11.0, *) {
-                recorder.startCapture { (buffer, bufferType, error) in
-                    if bufferType == RPSampleBufferType.video && self.videoEnabled
-                    {
-                        self.capture(buffer)
-                    }
-                    else if bufferType == RPSampleBufferType.audioApp && self.audioEnabled {
-                        self.webRTCClient?.deliverExternalAudio(sampleBuffer: buffer);
+                recorder.startCapture { [weak self] buffer, bufferType, error in
+                    guard let self else { return }
+                    
+                    if bufferType == RPSampleBufferType.video && self.videoEnabled {
+                        capture(buffer)
+                    } else if bufferType == RPSampleBufferType.audioApp && self.audioEnabled {
+                        webRTCClient?.deliverExternalAudio(sampleBuffer: buffer)
                         
                     }
                 } completionHandler: { (error) in
@@ -179,26 +172,21 @@ class RTCCustomFrameCapturer: RTCVideoCapturer {
                         return;
                     }
                 }
-            } else {
-                // Fallback on earlier versions
             }
         }
     }
     
-    public func stopCapture()
-    {
+    public func stopCapture() {
         if !externalCapture {
             let recorder = RPScreenRecorder.shared();
-            if (recorder.isRecording) {
+            if recorder.isRecording {
                  if #available(iOS 11.0, *) {
-                     recorder.stopCapture { (error) in
+                     recorder.stopCapture { error in
                          guard error == nil else {
                              print("Cannot stop capture \(String(describing: error))");
-                             return;
+                             return
                          }
                      }
-                 } else {
-                     
                  }
              }
         }
