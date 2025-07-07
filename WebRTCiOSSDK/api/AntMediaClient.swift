@@ -36,16 +36,16 @@ public enum AntMediaClientMode: Int {
     
     func getName() -> String {
         switch self {
-            case .join:
-                return "join"
-            case .play:
-                return "play"
-            case .publish:
-                return "publish"
-            case .conference:
-                return "conference"
-            case .unspecified:
-                return "unspecified";
+        case .join:
+            return "join"
+        case .play:
+            return "play"
+        case .publish:
+            return "publish"
+        case .conference:
+            return "conference"
+        case .unspecified:
+            return "unspecified"
         }
     }
     
@@ -214,7 +214,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     
     public func setMaxVideoBps(videoBitratePerSecond: NSNumber) {
         self.maxVideoBps = videoBitratePerSecond;
-        self.webRTCClientMap[self.getPublisherStreamId()]?.setMaxVideoBps(maxVideoBps: videoBitratePerSecond)
+        webRTCClientMap[getPublisherStreamId()]?.setMaxVideoBps(maxVideoBps: videoBitratePerSecond)
     }
     
     public func setVideoEnable( enable: Bool) {
@@ -222,17 +222,15 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     }
     
     public func getStreamId(_ streamId:String = "") -> String {
-        //backward compatibility
         if streamId.isEmpty {
-            return self.publisherStreamId ?? (self.playerStreamId ?? (self.p2pStreamId ?? ""));
-        }
-        else {
-            return streamId;
+            return publisherStreamId ?? (playerStreamId ?? (p2pStreamId ?? ""))
+        } else {
+            return streamId
         }
     }
     
     public func getPublisherStreamId() -> String {
-        return self.publisherStreamId ?? (self.p2pStreamId ?? "");
+        publisherStreamId ?? (p2pStreamId ?? "")
     }
     
     
@@ -273,14 +271,14 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     
     func getHandshakeMessage(streamId: String, mode: AntMediaClientMode, token:String = "") -> String {
         
-        var trackList:[String] = [];
-        printf("disable track id is \(String(describing: self.disableTrackId))");
+        var trackList: [String] = []
+        printf("disable track id is \(String(describing: disableTrackId))")
         
-        if let trackId = self.disableTrackId {
-            printf("appending track id to the tracklist \(String(describing: self.disableTrackId))");
-            trackList.append("!" + trackId);
+        if let trackId = disableTrackId {
+            printf("appending track id to the tracklist \(String(describing: self.disableTrackId))")
+            trackList.append("!" + trackId)
         } else {
-            printf("Disable track id is not set \(String(describing: self.disableTrackId))");
+            printf("Disable track id is not set \(String(describing: self.disableTrackId))")
         }
         
         let metaData = VideoMetaData(isMicMuted: !audioEnable,
@@ -403,7 +401,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         self.streamsInTheRoom = streams;
         
         if (self.streamsInTheRoom.count > 0) {
-            self.delegate?.newStreamsJoined(streams:  streams);
+            self.delegate?.newStreamsJoined(streams: streams);
         }
         
         reconnectIfRequires()
@@ -472,31 +470,27 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     
     public func play(streamId: String, token: String = "") {
         
-        self.playerStreamId = streamId;
-        if (!token.isEmpty) {
-            self.playToken = token;
+        self.playerStreamId = streamId
+        
+        if !token.isEmpty {
+            self.playToken = token
         }
         
-        if let streamId = self.publisherStreamId
-        {
-            if (self.webRTCClientMap[streamId] == nil)
-            {
+        if let streamId = publisherStreamId {
+            if webRTCClientMap[streamId] == nil {
                 //if there is not publisherStreamId, don't ask mic permission for playing
-                dontAskMicPermissionForPlaying();
+                dontAskMicPermissionForPlaying()
             }
-        }
-        else {
+        } else {
             //if there is not publisherStreamId, don't ask mic permission for playing
             dontAskMicPermissionForPlaying();
         }
         
-        
-        
         initPeerConnection(streamId: streamId, mode: AntMediaClientMode.play, token: token)
-        if (!isWebSocketConnected) {
-            connectWebSocket();
-        }
-        else {
+        
+        if !isWebSocketConnected {
+            connectWebSocket()
+        } else {
             sendPlayCommand(streamId)
         }
     }
@@ -509,23 +503,22 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         dispatchQueue.async { [weak self] in
             guard let self else { return }
             
-            printf("Connect websocket to \(self.getWsUrl())")
-            if (!self.isWebSocketConnected && !self.isWebSocketConnecting) { //provides backward compatibility
-                self.isWebSocketConnecting = true;
-                self.streamsInTheRoom.removeAll();
-                printf("Will connect to: \(self.getWsUrl()) for stream: \(self.getStreamId())")
+            printf("Connect websocket to \(getWsUrl())")
+            if (!isWebSocketConnected && !isWebSocketConnecting) { //provides backward compatibility
+                isWebSocketConnecting = true
+                streamsInTheRoom.removeAll()
+                printf("Will connect to: \(getWsUrl()) for stream: \(self.getStreamId())")
                 
-                self.webSocket = WebSocket(request: self.getRequest())
-                self.webSocket?.delegate = self
-                self.webSocket?.connect()
-                
-            }
-            else {
-                if (self.isWebSocketConnected) {
-                    printf("WebSocket is already connected to: \(self.getWsUrl())")
+                webSocket = WebSocket(request: getRequest())
+                webSocket?.delegate = self
+                webSocket?.connect()
+            } else {
+                if isWebSocketConnected {
+                    printf("WebSocket is already connected to: \(getWsUrl())")
                 }
-                if (self.isWebSocketConnecting) {
-                    printf("WebSocket is connecting to: \(self.getWsUrl())")
+                
+                if isWebSocketConnecting {
+                    printf("WebSocket is connecting to: \(getWsUrl())")
                 }
             }
         }
@@ -941,39 +934,35 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
      */
     private func reconnectIfRequires() {
        
-        if (self.reconnectIfRequiresScheduled) {
+        if reconnectIfRequiresScheduled {
             printf("ReconnectIfRequires is already scheduled and it will work soon")
-            return;
+            return
         }
         
-        self.reconnectIfRequiresScheduled = true;
+        reconnectIfRequiresScheduled = true
         
         dispatchQueue.asyncAfter(deadline: .now() + 3.0) { [weak self] in
-            
             guard let self else { return }
             
-            self.reconnectIfRequiresScheduled = false;
+            reconnectIfRequiresScheduled = false
             
             if let streamId = self.publisherStreamId {
                 //if there is a webRTCClient in the map, it means it's disconnected due to network issue
-                if (self.webRTCClientMap[streamId] != nil)
-                {
-                    let iceState = self.webRTCClientMap[streamId]?.getIceConnectionState();
+                if webRTCClientMap[streamId] != nil {
+                    let iceState = webRTCClientMap[streamId]?.getIceConnectionState()
                     
                     //check the ice state if this method is triggered consequently
                     if ( iceState == RTCIceConnectionState.closed ||
                          iceState == RTCIceConnectionState.disconnected ||
                          iceState == RTCIceConnectionState.failed ||
                          iceState == RTCIceConnectionState.new
-                    )
-                    {
+                    ) {
                         //clean the connection
-                        self.webRTCClientMap.removeValue(forKey: streamId)?.disconnect()
-                        printf("Reconnecting to publish the stream:\(streamId)");
-                        self.publish(streamId:streamId)
-                    }
-                    else {
-                        printf("Not trying to reconnect to publish the stream:\(streamId) because ice connection state is not disconnected");
+                        webRTCClientMap.removeValue(forKey: streamId)?.disconnect()
+                        printf("Reconnecting to publish the stream:\(streamId)")
+                        publish(streamId:streamId)
+                    } else {
+                        printf("Not trying to reconnect to publish the stream:\(streamId) because ice connection state is not disconnected")
                     }
                 }
             }
@@ -1035,7 +1024,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         
         if type == "offer" {
             rtcSessionDesc = RTCSessionDescription.init(type: RTCSdpType.offer, sdp: sdp)
-            self.webRTCClientMap[streamId]?.setRemoteDescription(rtcSessionDesc, completionHandler: { [weak self] error in
+            webRTCClientMap[streamId]?.setRemoteDescription(rtcSessionDesc, completionHandler: { [weak self] error in
                 if error == nil {
                     self?.webRTCClientMap[streamId]?.sendAnswer()
                 } else {
@@ -1044,11 +1033,8 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
             })
             
         } else if type == "answer" {
-            rtcSessionDesc = RTCSessionDescription.init(type: RTCSdpType.answer, sdp: sdp)
-            self.webRTCClientMap[streamId]?.setRemoteDescription(rtcSessionDesc, completionHandler: { (error ) in
-                
-                
-            })
+            rtcSessionDesc = RTCSessionDescription(type: RTCSdpType.answer, sdp: sdp)
+            webRTCClientMap[streamId]?.setRemoteDescription(rtcSessionDesc, completionHandler: { _ in })
         }
     }
     
@@ -1057,18 +1043,18 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         let index = message["label"] as! Int
         let sdp = message["candidate"] as! String
         let candidate: RTCIceCandidate = RTCIceCandidate.init(sdp: sdp, sdpMLineIndex: Int32(index), sdpMid: mid)
-        self.webRTCClientMap[streamId]?.addCandidate(candidate)
+        
+        webRTCClientMap[streamId]?.addCandidate(candidate)
     }
     
     private func onMessage(_ msg: String) {
-        if let message = msg.toJSON() {
-            guard let command = message[COMMAND] as? String else {
-                return
-            }
-            self.onCommand(command, message: message)
-        } else {
-            print("WebSocket message JSON parsing error: " + msg)
+        guard let message = msg.toJSON(),
+              let command = message[COMMAND] as? String else {
+            printf("WebSocket message JSON parsing error: " + msg)
+            return
         }
+        
+        onCommand(command, message: message)
     }
     
     private func onCommand(_ command: String, message: [String: Any]) {

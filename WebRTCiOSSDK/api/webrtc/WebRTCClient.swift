@@ -46,7 +46,7 @@ class WebRTCClient: NSObject {
     
     private var token: String!
     private var streamId: String!
-
+    
     private var audioEnabled: Bool = true
     private var videoEnabled: Bool = true
     /**
@@ -59,7 +59,7 @@ class WebRTCClient: NSObject {
     
     private var enableDataChannel: Bool = false;
     
-    private var cameraPosition: AVCaptureDevice.Position = .front
+    private(set) var cameraPosition: AVCaptureDevice.Position = .front
     
     private var targetWidth: Int = 480
     private var targetHeight: Int = 360
@@ -75,7 +75,7 @@ class WebRTCClient: NSObject {
     var iceConnectionState:RTCIceConnectionState = .new;
     
     private var degradationPreference:RTCDegradationPreference = .maintainResolution;
-        
+    
     public init(remoteVideoView: RTCVideoRenderer?, localVideoView: RTCVideoRenderer?, delegate: WebRTCClientDelegate, externalAudio:Bool) {
         super.init()
         
@@ -88,7 +88,7 @@ class WebRTCClient: NSObject {
         self.externalAudio = externalAudio;
         self.audioDeviceModule = RTCAudioDeviceModule();
         self.audioDeviceModule?.setExternalAudio(externalAudio)
-            
+        
         factory = initFactory()
         
         let stunServer = Config.defaultStunServer()
@@ -142,7 +142,7 @@ class WebRTCClient: NSObject {
         }
         else {
             return RTCPeerConnectionFactory(encoderFactory: videoEncoderFactory, decoderFactory: videoDecoderFactory,
-                                                            audioDeviceModule: audioDeviceModule!)
+                                            audioDeviceModule: audioDeviceModule!)
         }
     }
     
@@ -178,16 +178,15 @@ class WebRTCClient: NSObject {
         if dataChannel?.readyState == .open {
             let dataBuffer = RTCDataBuffer.init(data: data, isBinary: binary)
             dataChannel?.sendData(dataBuffer)
-        }
-        else {
+        } else {
             printf("Data channel is nil or state is not open. State is \(String(describing: self.dataChannel?.readyState)) Please check that data channel is enabled in server side ")
         }
     }
     
     public func isDataChannelActive() -> Bool {
-        return self.dataChannel?.readyState == .open;
+        dataChannel?.readyState == .open
     }
-
+    
     
     public func sendAnswer() {
         let constraint = Config.createAudioVideoConstraints()
@@ -208,7 +207,7 @@ class WebRTCClient: NSObject {
                     
                     var answerDict = [String: Any]()
                     
-                    if self.token.isEmpty {
+                    if token.isEmpty {
                         answerDict =  ["type": "answer",
                                        "command": "takeConfiguration",
                                        "sdp": sdp!.sdp,
@@ -237,7 +236,7 @@ class WebRTCClient: NSObject {
         }
         
         let constraint = Config.createAudioVideoConstraints()
-
+        
         peerConnection?.offer(for: constraint, completionHandler: { [weak self] sdp, error in
             guard let self else { return }
             
@@ -283,7 +282,7 @@ class WebRTCClient: NSObject {
         }
         return dataChannel
     }
-
+    
     public func disconnect() {
         printf("disconnecting and releasing resources for \(streamId)")
         //TODO: how to clear all resources
@@ -337,19 +336,17 @@ class WebRTCClient: NSObject {
     }
     
     public func toggleAudioEnabled() {
-        self.setAudioEnabled(enabled:!self.audioEnabled);
+        setAudioEnabled(enabled: !audioEnabled)
     }
     
     public func setAudioEnabled(enabled:Bool) {
         self.audioEnabled = enabled;
-        if (self.localAudioTrack != nil) {
-            self.localAudioTrack.isEnabled = self.audioEnabled
+        if localAudioTrack != nil {
+            localAudioTrack.isEnabled = audioEnabled
         }
     }
     
-    public func isAudioEnabled() -> Bool {
-        return self.audioEnabled;
-    }
+    public func isAudioEnabled() -> Bool { audioEnabled }
     
     public func toggleVideoEnabled() {
         self.setVideoEnabled(enabled: !self.videoEnabled)
@@ -373,7 +370,7 @@ class WebRTCClient: NSObject {
     @discardableResult
     private func startCapture() -> Bool {
         if let videoCapturer = videoCapturer as? RTCFileVideoCapturer {
-//            try? AVAudioSession.sharedInstance().setActive(true)
+            //            try? AVAudioSession.sharedInstance().setActive(true)
             videoCapturer.startCapturing(fromFileNamed: rtcFileName) { error in
                 print(error.localizedDescription)
             }
@@ -381,58 +378,65 @@ class WebRTCClient: NSObject {
             return true
         }
         
-        let camera = (RTCCameraVideoCapturer.captureDevices().first { $0.position == self.cameraPosition })
+        let camera = RTCCameraVideoCapturer.captureDevices().first { $0.position == cameraPosition }
         
-        if (camera != nil) {
-            let supportedFormats = RTCCameraVideoCapturer.supportedFormats(for: camera!)
-            var currentDiff = INT_MAX
-            var selectedFormat: AVCaptureDevice.Format? = nil
-            for supportedFormat in supportedFormats {
-                let dimension = CMVideoFormatDescriptionGetDimensions(supportedFormat.formatDescription)
-                let diff = abs(Int32(targetWidth) - dimension.width) + abs(Int32(targetHeight) - dimension.height);
-                if (diff < currentDiff) {
-                    selectedFormat = supportedFormat
-                    currentDiff = diff
-                }
-            }
-            
-            if (selectedFormat != nil) {
-                
-                var maxSupportedFramerate: Float64 = 0;
-                for fpsRange in selectedFormat!.videoSupportedFrameRateRanges {
-                    maxSupportedFramerate = fmax(maxSupportedFramerate, fpsRange.maxFrameRate);
-                }
-                let fps = fmin(maxSupportedFramerate, Double(self.cameraSourceFPS));
-                
-                let dimension = CMVideoFormatDescriptionGetDimensions(selectedFormat!.formatDescription)
-                
-                printf("Camera resolution: " + String(dimension.width) + "x" + String(dimension.height)
-                                      + " fps: " + String(fps))
-                
-                let cameraVideoCapturer = self.videoCapturer as? RTCCameraVideoCapturer;
-                
-                if #available(iOS 16.0, *) {
-                    if cameraVideoCapturer?.captureSession.isMultitaskingCameraAccessSupported == true {
-                        cameraVideoCapturer?.captureSession.isMultitaskingCameraAccessEnabled = true
-                    }
-                }
-                
-                cameraVideoCapturer?.startCapture(with: camera!,
-                                                  format: selectedFormat!,
-                                                  fps: Int(fps))
-                
-                return true
-            }
-            else {
-                printf("Cannot open camera not suitable format")
-            }
-        }
-        else {
+        guard let camera else {
             printf("Not Camera Found")
+            return false
         }
         
-        return false;
+        let supportedFormats = RTCCameraVideoCapturer.supportedFormats(for: camera)
+        var currentDiff = INT_MAX
+        var selectedFormat: AVCaptureDevice.Format? = nil
+        for supportedFormat in supportedFormats {
+            let dimension = CMVideoFormatDescriptionGetDimensions(supportedFormat.formatDescription)
+            let diff = abs(Int32(targetWidth) - dimension.width) + abs(Int32(targetHeight) - dimension.height);
+            if (diff < currentDiff) {
+                selectedFormat = supportedFormat
+                currentDiff = diff
+            }
+        }
         
+        guard let selectedFormat else {
+            printf("Cannot open camera not suitable format")
+            return false
+        }
+        
+        var maxSupportedFramerate: Float64 = 0
+        for fpsRange in selectedFormat.videoSupportedFrameRateRanges {
+            maxSupportedFramerate = fmax(maxSupportedFramerate, fpsRange.maxFrameRate)
+        }
+        let fps = fmin(maxSupportedFramerate, Double(cameraSourceFPS))
+        
+        let dimension = CMVideoFormatDescriptionGetDimensions(selectedFormat.formatDescription)
+        
+        printf("Camera resolution: " + String(dimension.width) + "x" + String(dimension.height)
+               + " fps: " + String(fps))
+        
+        let cameraVideoCapturer = videoCapturer as? RTCCameraVideoCapturer
+    
+        
+        if #available(iOS 16.0, *) {
+            if cameraVideoCapturer?.captureSession.isMultitaskingCameraAccessSupported == true {
+                cameraVideoCapturer?.captureSession.isMultitaskingCameraAccessEnabled = true
+            }
+        }
+        
+        cameraVideoCapturer?.startCapture(with: camera,
+                                          format: selectedFormat,
+                                          fps: Int(fps))
+        
+        (localVideoView as? RTCMTLVideoView)?.isHidden = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            (self?.localVideoView as? RTCMTLVideoView)?.isHidden = false
+            if self?.cameraPosition == .front {
+                (self?.localVideoView as? RTCMTLVideoView)?.transform = CGAffineTransform(scaleX: -1, y: 1)
+            } else {
+                (self?.localVideoView as? RTCMTLVideoView)?.transform = .identity
+            }
+        }
+        
+        return true
     }
     
     private func createVideoTrack() -> RTCVideoTrack?  {
@@ -450,13 +454,13 @@ class WebRTCClient: NSObject {
             return videoTrack
         } else {
             var videoSource = factory.videoSource()
-            #if targetEnvironment(simulator)
+#if targetEnvironment(simulator)
             videoCapturer = RTCFileVideoCapturer(delegate: videoSource)
             let captureStarted = startCapture()
             if (!captureStarted) {
                 return nil;
             }
-            #else
+#else
             
             if let videoEffect {
                 pipe = nil
@@ -479,7 +483,7 @@ class WebRTCClient: NSObject {
             if (!captureStarted) {
                 return nil;
             }
-            #endif
+#endif
             
             let videoTrack = factory.videoTrack(with: videoSource, trackId: "video0")
             videoTrack.isEnabled = isVideoEnabled()
@@ -494,34 +498,29 @@ class WebRTCClient: NSObject {
         guard let factory else { return false }
         
         printf("Add local media streams")
-//        if (self.videoEnabled)
-//        {
-//        #if targetEnvironment(simulator)
-//        #else
-            self.localVideoTrack = createVideoTrack();
-
-            self.videoSender = self.peerConnection?.add(self.localVideoTrack,  streamIds: [LOCAL_MEDIA_STREAM_ID])
-            
-            if let params = videoSender?.parameters {
-                params.degradationPreference = (self.degradationPreference.rawValue) as NSNumber
-                videoSender?.parameters = params
-            } else {
-                printf("DegradationPreference cannot be set");
-            }
         
-            
-//        #endif
-//        }
-            
-        let audioSource = factory.audioSource(with: Config.createTestConstraints())
-        self.localAudioTrack = factory.audioTrack(with: audioSource, trackId: AUDIO_TRACK_ID)
+        // Create Video Track
+        localVideoTrack = createVideoTrack()
+        videoSender = peerConnection?.add(localVideoTrack,  streamIds: [LOCAL_MEDIA_STREAM_ID])
         
-        self.peerConnection?.add(self.localAudioTrack, streamIds: [LOCAL_MEDIA_STREAM_ID])
-        
-        if (self.localVideoTrack != nil && self.localVideoView != nil) {
-            self.localVideoTrack.add(localVideoView!)
+        if let params = videoSender?.parameters {
+            params.degradationPreference = (degradationPreference.rawValue) as NSNumber
+            videoSender?.parameters = params
+        } else {
+            printf("DegradationPreference cannot be set")
         }
-        self.delegate?.addLocalStream(streamId: self.streamId)
+        
+        // Create Audio Track
+        let audioSource = factory.audioSource(with: Config.createTestConstraints())
+        localAudioTrack = factory.audioTrack(with: audioSource, trackId: AUDIO_TRACK_ID)
+        peerConnection?.add(localAudioTrack, streamIds: [LOCAL_MEDIA_STREAM_ID])
+        
+        if localVideoTrack != nil && localVideoView != nil {
+            localVideoTrack.add(localVideoView!)
+        }
+        
+        delegate?.addLocalStream(streamId: streamId)
+        
         return true
     }
     
@@ -530,18 +529,17 @@ class WebRTCClient: NSObject {
     }
     
     public func switchCamera() {
-        
-        let cameraVideoCapturer = self.videoCapturer as? RTCCameraVideoCapturer;
-        cameraVideoCapturer?.stopCapture()
-        
-        if self.cameraPosition == .front {
-            self.cameraPosition = .back
+        if let cameraVideoCapturer = videoCapturer as? RTCCameraVideoCapturer {
+            cameraVideoCapturer.stopCapture()
+            
+            if cameraPosition == .front {
+                cameraPosition = .back
+            } else {
+                cameraPosition = .front
+            }
+            
+            startCapture()
         }
-        else {
-            self.cameraPosition = .front
-        }
-        
-        startCapture()
     }
     
     public func switchToScreencast(_ screenCast: Bool) {
@@ -563,7 +561,7 @@ class WebRTCClient: NSObject {
         
         if let localVideoView {
             localVideoTrack.add(localVideoView)
-//            localVideoTrack.isEnabled = true
+            //            localVideoTrack.isEnabled = true
         }
     }
     
@@ -593,25 +591,23 @@ class WebRTCClient: NSObject {
         
         if let localVideoView {
             localVideoTrack.add(localVideoView)
-//            localVideoTrack.isEnabled = true
+            //            localVideoTrack.isEnabled = true
         }
     }
     
-    public func deliverExternalAudio(sampleBuffer: CMSampleBuffer)
-    {
-        self.audioDeviceModule?.deliverRecordedData(sampleBuffer)
+    public func deliverExternalAudio(sampleBuffer: CMSampleBuffer) {
+        audioDeviceModule?.deliverRecordedData(sampleBuffer)
     }
     
     public func getVideoCapturer() -> RTCVideoCapturer? {
-        return videoCapturer;
+        videoCapturer
     }
-      
+    
 }
 
-extension WebRTCClient: RTCDataChannelDelegate
-{
+extension WebRTCClient: RTCDataChannelDelegate {
     func dataChannel(_ dataChannel: RTCDataChannel, didReceiveMessageWith buffer: RTCDataBuffer) {
-        self.delegate?.dataReceivedFromDataChannel(didReceiveData: buffer, streamId: self.streamId)
+        delegate?.dataReceivedFromDataChannel(didReceiveData: buffer, streamId: streamId)
     }
     
     func dataChannelDidChangeState(_ parametersdataChannel: RTCDataChannel)  {
@@ -619,14 +615,11 @@ extension WebRTCClient: RTCDataChannelDelegate
         
         if (parametersdataChannel.readyState == .open) {
             printf("Data channel state is open")
-        }
-        else if  (parametersdataChannel.readyState == .connecting) {
+        } else if  (parametersdataChannel.readyState == .connecting) {
             printf("Data channel state is connecting")
-        }
-        else if  (parametersdataChannel.readyState == .closing) {
+        } else if  (parametersdataChannel.readyState == .closing) {
             printf("Data channel state is closing")
-        }
-        else if  (parametersdataChannel.readyState == .closed) {
+        } else if  (parametersdataChannel.readyState == .closed) {
             printf("Data channel state is closed")
         }
     }
@@ -646,26 +639,21 @@ extension WebRTCClient: RTCPeerConnectionDelegate {
     }
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didAdd rtpReceiver: RTCRtpReceiver, streams mediaStreams: [RTCMediaStream]) {
-        
-        
         printf("didAdd track:\(String(describing: rtpReceiver.track?.kind)) media streams count:\(mediaStreams.count) ")
         
         if let track = rtpReceiver.track {
-            self.delegate?.trackAdded(track:track, stream:mediaStreams);
-        }
-        else {
+            delegate?.trackAdded(track:track, stream:mediaStreams)
+        } else {
             printf("New track added but it's nil")
         }
-        
     }
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didRemove rtpReceiver: RTCRtpReceiver) {
         printf("didRemove track:\(String(describing: rtpReceiver.track?.kind))")
         
         if let track = rtpReceiver.track {
-            self.delegate?.trackRemoved(track:track);
-        }
-        else {
+            delegate?.trackRemoved(track:track)
+        } else {
             printf("New track removed but it's nil")
         }
     }
@@ -674,11 +662,10 @@ extension WebRTCClient: RTCPeerConnectionDelegate {
     func peerConnection(_ peerConnection: RTCPeerConnection, didAdd stream: RTCMediaStream) {
         
         printf("addedStream. Stream has \(stream.videoTracks.count) video tracks and \(stream.audioTracks.count) audio tracks");
-       
-        if (stream.videoTracks.count == 1)
-        {
-            printf("stream has video track");
-            if (remoteVideoView != nil) {
+        
+        if stream.videoTracks.count == 1 {
+            printf("stream has video track")
+            if remoteVideoView != nil {
                 remoteVideoTrack = stream.videoTracks[0]
                 
                 //remoteVideoTrack.setEnabled(true)
@@ -686,9 +673,9 @@ extension WebRTCClient: RTCPeerConnectionDelegate {
                 printf("Has delegate??? (signalingStateChanged): \(String(describing: self.delegate))")
             }
         }
-
         
-        delegate?.remoteStreamAdded(streamId: self.streamId);
+        
+        delegate?.remoteStreamAdded(streamId: streamId)
     }
     
     // removedStream
@@ -701,20 +688,24 @@ extension WebRTCClient: RTCPeerConnectionDelegate {
     
     // GotICECandidate
     func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
+        guard let streamId,
+              let id = candidate.sdpMid else { return }
+        
         let candidateJson = ["command": "takeCandidate",
                              "type" : "candidate",
-                             "streamId": self.streamId,
+                             "streamId": streamId,
                              "candidate" : candidate.sdp,
                              "label": candidate.sdpMLineIndex,
-                             "id": candidate.sdpMid] as [String : Any]
-        self.delegate?.sendMessage(candidateJson)
+                             "id": id] as [String : Any]
+        
+        delegate?.sendMessage(candidateJson)
     }
     
     // iceConnectionChanged
     func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceConnectionState) {
         printf("---> iceConnectionChanged: \(newState.rawValue) for stream: \(String(describing: self.streamId))")
-        self.iceConnectionState = newState;
-        self.delegate?.connectionStateChanged(newState: newState, streamId:self.streamId)
+        self.iceConnectionState = newState
+        delegate?.connectionStateChanged(newState: newState, streamId: streamId)
     }
     
     // iceGatheringChanged
