@@ -357,9 +357,17 @@ class WebRTCClient: NSObject {
     }
     
     public func setVideoEnabled(enabled:Bool){
-        self.videoEnabled = enabled;
-        if(self.localVideoTrack != nil) {
-            self.localVideoTrack.isEnabled = self.videoEnabled
+        self.videoEnabled = enabled
+        if localVideoTrack != nil {
+//            localVideoTrack.isEnabled = self.videoEnabled
+            
+            if !enabled {
+                if let capturer = videoCapturer as? RTCCameraVideoCapturer {
+                    capturer.stopCapture()
+                }
+            } else {
+                startCapture()
+            }
         }
     }
     
@@ -368,7 +376,7 @@ class WebRTCClient: NSObject {
     }
     
     @discardableResult
-    private func startCapture() -> Bool {
+    private func startCapture(withAnimation: Bool = false) -> Bool {
         if let videoCapturer = videoCapturer as? RTCFileVideoCapturer {
             //            try? AVAudioSession.sharedInstance().setActive(true)
             videoCapturer.startCapturing(fromFileNamed: rtcFileName) { error in
@@ -426,18 +434,42 @@ class WebRTCClient: NSObject {
                                           format: selectedFormat,
                                           fps: Int(fps))
         
-        (localVideoView as? RTCMTLVideoView)?.isHidden = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            (self?.localVideoView as? RTCMTLVideoView)?.isHidden = false
-            if self?.cameraPosition == .front {
-                (self?.localVideoView as? RTCMTLVideoView)?.transform = CGAffineTransform(scaleX: -1, y: 1)
-            } else {
-                (self?.localVideoView as? RTCMTLVideoView)?.transform = .identity
-            }
-        }
+        
+        mirrorVideoTrack(withAnimation: withAnimation)
         
         return true
     }
+    
+    private func mirrorVideoTrack(withAnimation: Bool) {
+        if let localVideoView = localVideoView as? RTCMTLVideoView {
+            if withAnimation {
+                UIView.animate(withDuration: 0.3) {
+                    localVideoView.alpha = 0
+                } completion: { _ in
+                    UIView.animate(withDuration: 0.3) {
+                        localVideoView.alpha = 1
+                    }
+                }
+                
+                UIView.transition(with: localVideoView, duration: 0.6, options: .transitionFlipFromLeft, animations: {
+                    if self.cameraPosition == .front {
+                        localVideoView.transform = CGAffineTransform(scaleX: -1, y: 1)
+                    } else {
+                        localVideoView.transform = .identity
+                    }
+                }, completion: nil)
+            } else {
+                DispatchQueue.main.async { [weak self] in
+                    if self?.cameraPosition == .front {
+                        localVideoView.transform = CGAffineTransform(scaleX: -1, y: 1)
+                    } else {
+                        localVideoView.transform = .identity
+                    }
+                }
+            }
+        }
+    }
+    
     
     private func createVideoTrack() -> RTCVideoTrack?  {
         
@@ -538,7 +570,7 @@ class WebRTCClient: NSObject {
                 cameraPosition = .front
             }
             
-            startCapture()
+            startCapture(withAnimation: true)
         }
     }
     
