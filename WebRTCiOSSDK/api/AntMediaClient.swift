@@ -617,7 +617,10 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
      Just switches the camera. It works on the fly as well
      */
     open func switchCamera() {
-        self.webRTCClientMap[(self.publisherStreamId ?? (self.p2pStreamId)) ?? ""]?.switchCamera()
+        webRTCClientMap[(publisherStreamId ?? (p2pStreamId)) ?? ""]?.switchCamera()
+        
+        let position = webRTCClientMap[(publisherStreamId ?? (p2pStreamId)) ?? ""]?.cameraPosition ?? .front
+        delegate?.onCameraPositionChange(position)
     }
     
     open func switchScreenCast(_ screenCast: Bool) {
@@ -1520,6 +1523,8 @@ extension AntMediaClient: WebRTCClientDelegate {
     
     
     public func connectionStateChanged(newState: RTCIceConnectionState, streamId:String) {
+        delegate?.connectionStateChange(newState: newState, for: streamId)
+        
         if newState == RTCIceConnectionState.closed ||
             newState == RTCIceConnectionState.disconnected ||
             newState == RTCIceConnectionState.failed

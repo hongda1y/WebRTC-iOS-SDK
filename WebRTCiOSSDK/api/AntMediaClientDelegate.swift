@@ -28,6 +28,10 @@ public protocol AntMediaClientDelegate: AnyObject {
 //    func clientDidJoin()
     
     func dataChannelDidChangeState(_ state: RTCDataChannelState)
+    
+    func connectionStateChange(newState: RTCIceConnectionState, for streamID: String)
+    
+    func onCameraPositionChange(_ position: AVCaptureDevice.Position)
 
     func onGetTrackList(_ tracks: [String])
     
@@ -190,6 +194,10 @@ public protocol AntMediaClientDelegate: AnyObject {
 public extension AntMediaClientDelegate {
     
     func dataChannelDidChangeState(_ state: RTCDataChannelState) {}
+    
+    func connectionStateChange(newState: RTCIceConnectionState, for streamID: String) {}
+    
+    func onCameraPositionChange(_ position: AVCaptureDevice.Position) {}
     
     func onGetTrackList(_ tracks: [String]) {
         printf("TrackList: \(tracks)")
