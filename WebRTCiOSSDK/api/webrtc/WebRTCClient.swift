@@ -358,16 +358,13 @@ class WebRTCClient: NSObject {
     
     public func setVideoEnabled(enabled:Bool){
         self.videoEnabled = enabled
-        if localVideoTrack != nil {
-//            localVideoTrack.isEnabled = self.videoEnabled
-            
-            if !enabled {
-                if let capturer = videoCapturer as? RTCCameraVideoCapturer {
-                    capturer.stopCapture()
-                }
-            } else {
-                startCapture()
+        
+        if !enabled {
+            if let capturer = videoCapturer as? RTCCameraVideoCapturer {
+                capturer.stopCapture()
             }
+        } else {
+            startCapture()
         }
     }
     
