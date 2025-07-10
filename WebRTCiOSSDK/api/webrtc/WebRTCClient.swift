@@ -304,8 +304,8 @@ class WebRTCClient: NSObject {
         self.localAudioTrack = nil
         self.remoteAudioTrack = nil
         
-        if self.videoCapturer is RTCCameraVideoCapturer {
-            (self.videoCapturer as? RTCCameraVideoCapturer)?.stopCapture()
+        if self.videoCapturer is CustomCameraVideoCapturer {
+            (self.videoCapturer as? CustomCameraVideoCapturer)?.stopCapture()
         } else if self.videoCapturer is RTCCustomFrameCapturer {
             (self.videoCapturer as? RTCCustomFrameCapturer)?.stopCapture()
         } else if self.videoCapturer is RTCFileVideoCapturer {
@@ -360,7 +360,7 @@ class WebRTCClient: NSObject {
         self.videoEnabled = enabled
         
         if !enabled {
-            if let capturer = videoCapturer as? RTCCameraVideoCapturer {
+            if let capturer = videoCapturer as? CustomCameraVideoCapturer {
                 capturer.stopCapture()
             }
         } else {
@@ -383,14 +383,16 @@ class WebRTCClient: NSObject {
             return true
         }
         
-        let camera = RTCCameraVideoCapturer.captureDevices().first { $0.position == cameraPosition }
+        let camera = CustomCameraVideoCapturer.captureDevices().first { $0.position == cameraPosition }
+//        let camera = RTCCameraVideoCapturer.captureDevices().first { $0.position == cameraPosition }
         
         guard let camera else {
             printf("Not Camera Found")
             return false
         }
         
-        let supportedFormats = RTCCameraVideoCapturer.supportedFormats(for: camera)
+        let supportedFormats = CustomCameraVideoCapturer.supportedFormats(for: camera)
+//        let supportedFormats = RTCCameraVideoCapturer.supportedFormats(for: camera)
         var currentDiff = INT_MAX
         var selectedFormat: AVCaptureDevice.Format? = nil
         for supportedFormat in supportedFormats {
@@ -418,14 +420,20 @@ class WebRTCClient: NSObject {
         printf("Camera resolution: " + String(dimension.width) + "x" + String(dimension.height)
                + " fps: " + String(fps))
         
-        let cameraVideoCapturer = videoCapturer as? RTCCameraVideoCapturer
+//        let cameraVideoCapturer = videoCapturer as? RTCCameraVideoCapturer
+        let cameraVideoCapturer = videoCapturer as? CustomCameraVideoCapturer
     
         
         if #available(iOS 16.0, *) {
-            if cameraVideoCapturer?.captureSession.isMultitaskingCameraAccessSupported == true {
-                cameraVideoCapturer?.captureSession.isMultitaskingCameraAccessEnabled = true
-            }
+//            if cameraVideoCapturer?.captureSession.isMultitaskingCameraAccessSupported == true {
+//                cameraVideoCapturer?.captureSession.isMultitaskingCameraAccessEnabled = true
+//            }
         }
+        
+//        cameraVideoCapturer?.startCapture(with: camera,
+//                                          format: selectedFormat,
+//                                          fps: Int(fps))
+        
         
         cameraVideoCapturer?.startCapture(with: camera,
                                           format: selectedFormat,
@@ -436,6 +444,7 @@ class WebRTCClient: NSObject {
         
         return true
     }
+    
     
     private func mirrorVideoTrack() {
         if let localVideoView = localVideoView as? RTCMTLVideoView {
@@ -502,10 +511,12 @@ class WebRTCClient: NSObject {
                     pipe?.setBackgroundImage(image: image)
                 }
                 
-                videoCapturer = RTCCameraVideoCapturer(delegate: pipe!)
+//                videoCapturer = RTCCameraVideoCapturer(delegate: pipe!)
+                videoCapturer = CustomCameraVideoCapturer(delegate: pipe!)
                 
             } else {
-                videoCapturer = RTCCameraVideoCapturer(delegate: videoSource)
+//                videoCapturer = RTCCameraVideoCapturer(delegate: videoSource)
+                videoCapturer = CustomCameraVideoCapturer(delegate: videoSource)
             }
             
             let captureStarted = startCapture()
@@ -558,7 +569,8 @@ class WebRTCClient: NSObject {
     }
     
     public func switchCamera() {
-        if let cameraVideoCapturer = videoCapturer as? RTCCameraVideoCapturer {
+//        if let cameraVideoCapturer = videoCapturer as? RTCCameraVideoCapturer {
+        if let cameraVideoCapturer = videoCapturer as? CustomCameraVideoCapturer {
             cameraVideoCapturer.stopCapture()
             
             if cameraPosition == .front {
@@ -575,8 +587,8 @@ class WebRTCClient: NSObject {
         useExternalCameraSource = screenCast
         externalVideoCapture = screenCast
         
-        if videoCapturer is RTCCameraVideoCapturer {
-            (videoCapturer as? RTCCameraVideoCapturer)?.stopCapture()
+        if videoCapturer is CustomCameraVideoCapturer {
+            (videoCapturer as? CustomCameraVideoCapturer)?.stopCapture()
         } else if videoCapturer is RTCCustomFrameCapturer {
             (videoCapturer as? RTCCustomFrameCapturer)?.stopCapture()
         }
@@ -605,8 +617,8 @@ class WebRTCClient: NSObject {
     public func useVideoEffect(_ effect: VideoEffect? = nil) {
         self.videoEffect = effect
         
-        if videoCapturer is RTCCameraVideoCapturer {
-            (videoCapturer as? RTCCameraVideoCapturer)?.stopCapture()
+        if videoCapturer is CustomCameraVideoCapturer {
+            (videoCapturer as? CustomCameraVideoCapturer)?.stopCapture()
         } else if videoCapturer is RTCCustomFrameCapturer {
             (videoCapturer as? RTCCustomFrameCapturer)?.stopCapture()
         }

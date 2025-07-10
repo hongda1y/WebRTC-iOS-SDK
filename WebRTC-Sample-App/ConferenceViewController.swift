@@ -71,10 +71,6 @@ open class ConferenceViewController: UIViewController ,  AVCaptureVideoDataOutpu
         self.conferenceClient?.setTargetResolution(width: 854, height: 480)
         self.conferenceClient?.publish(streamId: self.publisherStreamId, token: "", mainTrackId: roomId);
         
-        Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { _ in
-            self.conferenceClient?.toggleVideo()
-        }
-        
         //this plays the streams in the room
         
         //self.conferenceClient?.play(streamId: self.roomId);
@@ -120,6 +116,10 @@ extension ConferenceViewController: AntMediaClientDelegate {
     public func playStarted(streamId: String) {
         print("play started")
         AntMediaClient.speakerOn()
+        
+//        Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { _ in
+//            self.conferenceClient?.switchCamera()
+//        }
     }
     
     public func trackAdded(track: RTCMediaStreamTrack, stream: [RTCMediaStream]) {
