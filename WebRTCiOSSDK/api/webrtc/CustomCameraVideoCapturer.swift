@@ -145,9 +145,9 @@ final class CustomCameraVideoCapturer: RTCVideoCapturer {
         NotificationCenter.default.removeObserver(self)
         
         // Ensure cleanup happens synchronously without weak reference
-        captureSessionQueue.sync {
-            self.cleanupCaptureSession()
-        }
+//        captureSessionQueue.sync {
+            cleanupCaptureSession()
+//        }
     }
     
     // MARK: - Public API
