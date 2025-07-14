@@ -1347,6 +1347,17 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         webSocket?.write(string: command.json)
     }
     
+    public func setMaxTrackCount(_ count: Int) {
+        let command = [
+            "command": "setMaxVideoTrackCountCommand",
+            "maxTrackCount": count,
+            "streamId": getPublisherStreamId()
+        ] as [String: Any]
+        
+        webSocket?.write(string: command.json)
+    }
+    
+    
     public func writeWebsocketMessage(_ jsonString: String) {
         webSocket?.write(string: jsonString)
     }

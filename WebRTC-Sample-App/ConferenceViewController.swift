@@ -117,8 +117,12 @@ extension ConferenceViewController: AntMediaClientDelegate {
         print("play started")
         AntMediaClient.speakerOn()
         
-//        Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { _ in
-//            self.conferenceClient?.switchCamera()
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+//            self.conferenceClient?.setMaxTrackCount(3)
+//        }
+        
+//        Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { _ in
+//            self.conferenceClient?.setMaxTrackCount(2)
 //        }
     }
     
