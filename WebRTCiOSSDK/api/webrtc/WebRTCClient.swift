@@ -34,11 +34,11 @@ class WebRTCClient: NSObject {
         }
     }
     
-    var localAudioTrack: RTCAudioTrack!
-    var remoteVideoTrack: RTCVideoTrack!
-    var remoteAudioTrack: RTCAudioTrack!
-    var remoteVideoView: RTCVideoRenderer?
-    var localVideoView: RTCVideoRenderer?
+    public var localAudioTrack: RTCAudioTrack!
+    public var remoteVideoTrack: RTCVideoTrack!
+    public var remoteAudioTrack: RTCAudioTrack!
+    public var remoteVideoView: RTCVideoRenderer?
+    public var localVideoView: RTCVideoRenderer?
     var videoSender: RTCRtpSender?
     var dataChannel: RTCDataChannel?
     

@@ -815,6 +815,26 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         self.webRTCClientMap[getPublisherStreamId()]?.getLocalTrack()
     }
     
+    public func getLocalAudioTrack() -> RTCAudioTrack? {
+        self.webRTCClientMap[getPublisherStreamId()]?.localAudioTrack
+    }
+    
+    public func getRemoteVideoTrack() -> RTCVideoTrack? {
+        self.webRTCClientMap[getPublisherStreamId()]?.remoteVideoTrack
+    }
+    
+    public func getRemoteAudioTrack() -> RTCAudioTrack? {
+        self.webRTCClientMap[getPublisherStreamId()]?.remoteAudioTrack
+    }
+    
+    public func getRemoteVideoView() -> RTCVideoRenderer? {
+        self.webRTCClientMap[getPublisherStreamId()]?.remoteVideoView
+    }
+    
+    public func getLocalVideoView() -> RTCVideoRenderer? {
+        self.webRTCClientMap[getPublisherStreamId()]?.localVideoView
+    }
+    
     func sendVideoTrackStatusNotification(enabled:Bool) {
         let eventType = enabled ? EVENT_TYPE_CAM_TURNED_ON : EVENT_TYPE_CAM_TURNED_OFF
         let id = getPublisherStreamId()
