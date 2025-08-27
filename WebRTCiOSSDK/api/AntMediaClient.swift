@@ -709,6 +709,10 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
          AntMediaClient.isDebug = value
     }
     
+    public func getPeerConnection() -> RTCPeerConnection? {
+        webRTCClientMap[publisherStreamId ?? (p2pStreamId ?? "")]?.peerConnection
+    }
+    
     /*
      Toggle publisher audo
      */
