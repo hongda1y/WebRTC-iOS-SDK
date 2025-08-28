@@ -125,6 +125,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     private var username: String?
     private var profilePicture: String?
     private var role: String?
+    private var entryId: Int?
     
     private var metaData: [String: Any] = [:]
     
@@ -161,6 +162,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         var username: String?
         var profilePicture: String?
         var role: String?
+        var entryId: Int?
     }
     
     public override init() {
@@ -170,11 +172,12 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         self.metaData = metaData
     }
     
-    public func setUsernameInfo(userId: Int?, username: String, profilePicture: String, role: String) {
+    public func setUsernameInfo(userId: Int?, username: String, profilePicture: String, role: String, entryId: Int?) {
         self.userId = userId
         self.username = username
         self.profilePicture = profilePicture
         self.role = role
+        self.entryId = entryId
     }
     
     public func setOptions(url: String, streamId: String, token: String = "", mode: AntMediaClientMode = .join, enableDataChannel: Bool = false, useExternalCameraSource: Bool = false) {
@@ -240,7 +243,8 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                                      userId: userId,
                                      username: username,
                                      profilePicture: profilePicture,
-                                     role: role)
+                                     role: role,
+                                     entryId: entryId)
         
         let metaDataJSON = try! JSONEncoder().encode(metaData)
         
@@ -286,7 +290,8 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                                      userId: userId,
                                      username: username,
                                      profilePicture: profilePicture,
-                                     role: role)
+                                     role: role,
+                                     entryId: entryId)
         
         let metaDataJSON = try! JSONEncoder().encode(metaData)
         let metaDataJSONString = String(data: metaDataJSON, encoding: .utf8)
