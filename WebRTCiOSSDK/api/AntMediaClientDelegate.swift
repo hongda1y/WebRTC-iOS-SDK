@@ -195,7 +195,7 @@ public protocol AntMediaClientDelegate: AnyObject {
 
 public extension AntMediaClientDelegate {
     
-    func func onStop(streamID: String) {}
+    func onStop(streamID: String) {}
     
     func dataChannelDidChangeState(_ state: RTCDataChannelState) {}
     
