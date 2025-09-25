@@ -1106,6 +1106,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                 dispatchQueue.async { [weak self] in
                     let streamId = message[STREAM_ID] as! String
                     self?.webRTCClientMap.removeValue(forKey: streamId)?.disconnect()
+                    self?.delegate?.onStop(streamID: streamId)
                 }
             
             case "takeConfiguration":
