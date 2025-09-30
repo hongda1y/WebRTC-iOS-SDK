@@ -1046,6 +1046,10 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         }
     }
     
+    public func restartICE() {
+        webRTCClientMap[p2pStreamId ?? ""]?.restartICE()
+    }
+    
     private func onJoined() {
 //        delegate?.clientDidJoin()
     }
