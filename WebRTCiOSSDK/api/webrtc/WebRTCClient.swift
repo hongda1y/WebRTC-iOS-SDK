@@ -365,6 +365,8 @@ class WebRTCClient: NSObject {
             (self.videoCapturer as? RTCCustomFrameCapturer)?.stopCapture()
         } else if self.videoCapturer is RTCFileVideoCapturer {
             (self.videoCapturer as? RTCFileVideoCapturer)?.stopCapture()
+        } else if self.videoCapturer is BlackBackgroundVideoCapturer {
+            (self.videoCapturer as? BlackBackgroundVideoCapturer)?.stopCapture()
         }
         
         self.videoCapturer = nil;
@@ -435,6 +437,11 @@ class WebRTCClient: NSObject {
                 print(error.localizedDescription)
             }
             
+            return true
+        }
+        
+        if let blackCapturer = videoCapturer as? BlackBackgroundVideoCapturer {
+            blackCapturer.startCapture()
             return true
         }
         
@@ -555,23 +562,38 @@ class WebRTCClient: NSObject {
             }
 #else
             
-            if let videoEffect {
-                pipe = nil
-                pipe = RTCVideoPipe(videoSource: videoSource)
-                
-                switch videoEffect {
-                case .blur:
-                    pipe?.setBackgroundImage(image: nil)
-                case .image(let image):
-                    pipe?.setBackgroundImage(image: image)
-                }
-                
-//                videoCapturer = RTCCameraVideoCapturer(delegate: pipe!)
-                videoCapturer = CustomCameraVideoCapturer(delegate: pipe!)
-                
+            // Check camera permission status
+            let cameraPermissionStatus = AVCaptureDevice.authorizationStatus(for: .video)
+            
+            if cameraPermissionStatus == .denied || cameraPermissionStatus == .restricted {
+                // Camera permission is denied - use black background capturer
+                printf("Camera permission denied or restricted. Using black background capturer.")
+                videoCapturer = BlackBackgroundVideoCapturer(
+                    delegate: videoSource,
+                    width: Int32(targetWidth),
+                    height: Int32(targetHeight),
+                    fps: cameraSourceFPS
+                )
             } else {
-//                videoCapturer = RTCCameraVideoCapturer(delegate: videoSource)
-                videoCapturer = CustomCameraVideoCapturer(delegate: videoSource)
+                
+                if let videoEffect {
+                    pipe = nil
+                    pipe = RTCVideoPipe(videoSource: videoSource)
+                    
+                    switch videoEffect {
+                    case .blur:
+                        pipe?.setBackgroundImage(image: nil)
+                    case .image(let image):
+                        pipe?.setBackgroundImage(image: image)
+                    }
+                    
+                    //                videoCapturer = RTCCameraVideoCapturer(delegate: pipe!)
+                    videoCapturer = CustomCameraVideoCapturer(delegate: pipe!)
+                    
+                } else {
+                    //                videoCapturer = RTCCameraVideoCapturer(delegate: videoSource)
+                    videoCapturer = CustomCameraVideoCapturer(delegate: videoSource)
+                }
             }
             
             let captureStarted = startCapture()

@@ -60,6 +60,7 @@
 		DC6BEC692DE803CB007FC094 /* PreviewCameraViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC6BEC682DE803C4007FC094 /* PreviewCameraViewController.swift */; };
 		DC6BEC6B2DE850F2007FC094 /* PreviewedCameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC6BEC6A2DE850F2007FC094 /* PreviewedCameraManager.swift */; };
 		DC7D9C482E1F745A00E71564 /* CustomCameraVideoCapturer.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC7D9C472E1F745A00E71564 /* CustomCameraVideoCapturer.swift */; };
+		DCA19E792E8BD0D500337DD5 /* BlackBackgroundVideoCapturer.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCA19E782E8BD0D500337DD5 /* BlackBackgroundVideoCapturer.swift */; };
 		DCAA41752DDD71C400B3E288 /* VideoSample.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = DCAA41742DDD71C400B3E288 /* VideoSample.mp4 */; };
 /* End PBXBuildFile section */
 
@@ -209,6 +210,7 @@
 		DC6BEC682DE803C4007FC094 /* PreviewCameraViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewCameraViewController.swift; sourceTree = "<group>"; };
 		DC6BEC6A2DE850F2007FC094 /* PreviewedCameraManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewedCameraManager.swift; sourceTree = "<group>"; };
 		DC7D9C472E1F745A00E71564 /* CustomCameraVideoCapturer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCameraVideoCapturer.swift; sourceTree = "<group>"; };
+		DCA19E782E8BD0D500337DD5 /* BlackBackgroundVideoCapturer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlackBackgroundVideoCapturer.swift; sourceTree = "<group>"; };
 		DCAA41742DDD71C400B3E288 /* VideoSample.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = VideoSample.mp4; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -351,6 +353,7 @@
 			isa = PBXGroup;
 			children = (
 				DC7D9C472E1F745A00E71564 /* CustomCameraVideoCapturer.swift */,
+				DCA19E782E8BD0D500337DD5 /* BlackBackgroundVideoCapturer.swift */,
 				DC6BEC632DE6B424007FC094 /* VideoEffect.swift */,
 				A8DABFE92A063A020007CDE7 /* RTCCustomFrameCapturer.swift */,
 				A8DABFEA2A063A020007CDE7 /* Config.swift */,
@@ -689,6 +692,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A8DABFF92A063A020007CDE7 /* String.swift in Sources */,
+				DCA19E792E8BD0D500337DD5 /* BlackBackgroundVideoCapturer.swift in Sources */,
 				A8DABFF82A063A020007CDE7 /* Dictionary.swift in Sources */,
 				DC6BEC642DE6B426007FC094 /* VideoEffect.swift in Sources */,
 				A8DABFF02A063A020007CDE7 /* AntMediaClient.swift in Sources */,
