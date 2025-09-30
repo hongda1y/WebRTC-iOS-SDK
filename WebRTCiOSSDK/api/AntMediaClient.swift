@@ -1020,22 +1020,27 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                 }
             }
             
-            if let streamId = self.p2pStreamId {
+            if let streamId = p2pStreamId {
                 //if there is a webRTCClient in the map, it means it's disconnected due to network issue
-                if (self.webRTCClientMap[streamId] != nil) {
+                if webRTCClientMap[streamId] != nil {
                     
-                    let iceState = self.webRTCClientMap[streamId]?.getIceConnectionState();
-                    //check the ice state if this method is triggered consequently
-                    if ( iceState == RTCIceConnectionState.closed ||
-                         iceState == RTCIceConnectionState.disconnected ||
-                         iceState == RTCIceConnectionState.failed
-                    )
-                    {
-                        //clean the connection
-                        self.webRTCClientMap.removeValue(forKey: streamId)?.disconnect()
-                        printf("Reconnecting to join the stream:\(streamId) because ice connection state is not disconnected");
-                        self.join(streamId:streamId)
+                    let iceState = webRTCClientMap[streamId]?.getIceConnectionState()
+                    
+                    if iceState == .failed {
+                        webRTCClientMap[streamId]?.restartICE()
                     }
+                    
+//                    //check the ice state if this method is triggered consequently
+//                    if ( iceState == RTCIceConnectionState.closed ||
+//                         iceState == RTCIceConnectionState.disconnected ||
+//                         iceState == RTCIceConnectionState.failed
+//                    )
+//                    {
+//                        //clean the connection
+//                        self.webRTCClientMap.removeValue(forKey: streamId)?.disconnect()
+//                        printf("Reconnecting to join the stream:\(streamId) because ice connection state is not disconnected");
+//                        self.join(streamId:streamId)
+//                    }
                 }
             }
         }

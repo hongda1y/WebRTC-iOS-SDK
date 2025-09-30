@@ -270,6 +270,61 @@ class WebRTCClient: NSObject {
         })
     }
     
+    private func createOfferWithIceRestart(streamId: String) {
+        let constraint = Config.createAudioVideoConstraints()
+        
+        peerConnection?.offer(for: constraint, completionHandler: { [weak self] sdp, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                printf("Error creating offer for ICE restart: \(error.localizedDescription)")
+                return
+            }
+            
+            guard let sdp = sdp else { return }
+            
+            peerConnection?.setLocalDescription(sdp, completionHandler: { [weak self] error in
+                if let error = error {
+                    self?.printf("Error setting local description for ICE restart: \(error.localizedDescription)")
+                    return
+                }
+                
+                // Send the new offer with ICE restart flag
+                self?.sendIceRestartOffer(sdp: sdp, streamId: streamId)
+            })
+        })
+    }
+
+    // 4. Send ICE restart offer through signaling
+    private func sendIceRestartOffer(sdp: RTCSessionDescription, streamId: String) {
+        var offerDict = [String: Any]()
+        
+        if token.isEmpty {
+            offerDict = ["type": "offer",
+                         "command": "takeConfiguration",
+                         "sdp": sdp.sdp,
+                         "streamId": streamId,
+                         "iceRestart": true] as [String : Any]
+        } else {
+            offerDict = ["type": "offer",
+                         "command": "takeConfiguration",
+                         "sdp": sdp.sdp,
+                         "streamId": streamId,
+                         "token": token ?? "",
+                         "iceRestart": true] as [String : Any]
+        }
+        
+        delegate?.sendMessage(offerDict)
+        printf("Sent ICE restart offer for stream: \(streamId)")
+    }
+    
+    public func restartICE() {
+        if iceConnectionState == .failed {
+            peerConnection?.restartIce()
+            createOfferWithIceRestart(streamId: streamId)
+        }
+    }
+    
     public func stop() {
         disconnect()
     }
