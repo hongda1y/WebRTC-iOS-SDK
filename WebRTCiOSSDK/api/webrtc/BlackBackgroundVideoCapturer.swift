@@ -39,7 +39,8 @@ final class BlackBackgroundVideoCapturer: RTCVideoCapturer {
     }
     
     deinit {
-        stopCapture()
+        displayLink?.invalidate()
+        displayLink = nil
     }
     
     // MARK: - Public API
