@@ -1267,64 +1267,79 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         
     }
     
-    public func getStreamInfo()
-    {
-        if (self.isWebSocketConnected)
-        {
-            self.webSocket?.write(string: [COMMAND: GET_STREAM_INFO_COMMAND, STREAM_ID: self.playerStreamId].json)
-        }
-        else {
-            printf("Websocket is not connected")
+    public func getStreamInfo() {
+        if isWebSocketConnected {
+            webSocket?.write(string: [
+                COMMAND: GET_STREAM_INFO_COMMAND,
+                STREAM_ID: playerStreamId].json
+            )
+        } else {
+            printf("Websocket i connected")
         }
     }
     
-    public func forStreamQuality(resolutionHeight: Int)
-    {
-        if (self.isWebSocketConnected)
-        {
-            self.webSocket?.write(string: [COMMAND: FORCE_STREAM_QUALITY_INFO, STREAM_ID: (self.playerStreamId!), STREAM_HEIGHT_FIELD: resolutionHeight].json)
+    public func getStreamInfo(streamID: String) {
+        if isWebSocketConnected {
+            webSocket?.write(string: [
+                COMMAND: GET_STREAM_INFO_COMMAND,
+                STREAM_ID: streamID].json
+            )
+        } else {
+            printf("Websocket i connected")
         }
-        else {
+    }
+    
+    public func forStreamQuality(resolutionHeight: Int) {
+        if isWebSocketConnected {
+            webSocket?.write(string: [
+                COMMAND: FORCE_STREAM_QUALITY_INFO,
+                STREAM_ID: (playerStreamId!),
+                STREAM_HEIGHT_FIELD: resolutionHeight].json
+            )
+        } else {
             printf("Websocket is not connected")
         }
     }
     
     public func forceStreamQuality(resolutionHeight:Int, streamId:String) {
-        if (self.isWebSocketConnected)
-        {
-            self.webSocket?.write(string: [COMMAND: FORCE_STREAM_QUALITY_INFO, STREAM_ID: (self.playerStreamId!), TRACK_ID:streamId, STREAM_HEIGHT_FIELD: resolutionHeight].json)
-        }
-        else {
+        if isWebSocketConnected {
+            webSocket?.write(string: [
+                COMMAND: FORCE_STREAM_QUALITY_INFO,
+                STREAM_ID: (playerStreamId!),
+                TRACK_ID:streamId,
+                STREAM_HEIGHT_FIELD: resolutionHeight].json
+            )
+        } else {
             printf("Websocket is not connected")
         }
     }
     
     public func registerStatsListener(for streamId:String, timeInterval:Double = 5) {
-        self.rtcStatsTimer?.invalidate();
+        rtcStatsTimer?.invalidate()
         
-        self.rtcStatsStreamIdSet.insert(streamId)
-        self.rtcStatsTimer = Timer.scheduledTimer(withTimeInterval: timeInterval, repeats: true) { [weak self] timer in
-            
-            guard let self = self else { return }
+        rtcStatsStreamIdSet.insert(streamId)
+        rtcStatsTimer = Timer.scheduledTimer(withTimeInterval: timeInterval, repeats: true) { [weak self] timer in
+            guard let self else { return }
 
             var itemsToRemove: Set<String> = []
 
-            for streamIdInSet in rtcStatsStreamIdSet
-            {
-                if let webRTCClient = self.webRTCClientMap[streamIdInSet]
-                {
-                    webRTCClient.getStats(handler: { [weak self] report in
-                        self?.delegate?.onStats(streamId: streamIdInSet, statistics: report)
-                    });
-                }
-                else {
-                    itemsToRemove.insert(streamIdInSet);
+            for streamIdInSet in rtcStatsStreamIdSet {
+                if let webRTCClient = webRTCClientMap[streamIdInSet] {
+                    webRTCClient.getStats(
+                        handler: { [weak self] report in
+                            self?.delegate?.onStats(
+                                streamId: streamIdInSet,
+                                statistics: report
+                            )
+                        }
+                    )
+                } else {
+                    itemsToRemove.insert(streamIdInSet)
                 }
             }
             
-            
             for itemToRemove in itemsToRemove {
-                self.unregisterStatsListener(streamId: itemToRemove);
+                unregisterStatsListener(streamId: itemToRemove)
             }
         }
     }
