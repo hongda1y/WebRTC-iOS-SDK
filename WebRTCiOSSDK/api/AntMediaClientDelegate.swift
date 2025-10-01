@@ -51,6 +51,7 @@ public protocol AntMediaClientDelegate: AnyObject {
      Called when websocket connection has error
      */
     func clientHasError(_ message: String)
+    func clientError(_ error: AntMediaError)
     
     /**
      Called when stream is added to peer connection.
@@ -202,6 +203,8 @@ public extension AntMediaClientDelegate {
     func connectionStateChange(newState: RTCIceConnectionState, for streamID: String) {}
     
     func onCameraPositionChange(_ position: AVCaptureDevice.Position) {}
+    
+    func clientError(_ error: AntMediaError) {}
     
     func onGetTrackList(_ tracks: [String]) {
         printf("TrackList: \(tracks)")
