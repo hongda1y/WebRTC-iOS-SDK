@@ -70,6 +70,8 @@ class WebRTCClient: NSObject {
     private var externalAudio: Bool = false;
     
     private var cameraSourceFPS: Int = 30;
+    
+    private var isInitiatorp2p: Bool = false
     /*
      State of the connection
      */
@@ -266,6 +268,7 @@ class WebRTCClient: NSObject {
                                   "token": token ?? ""] as [String : Any]
                 }
                 
+                isInitiatorp2p = true
                 delegate?.sendMessage(offerDict)
             }
         })
@@ -322,7 +325,7 @@ class WebRTCClient: NSObject {
     public func restartICE() {
         if iceConnectionState == .failed {
 //            peerConnection?.restartIce()
-            if hasActiveNetworkInterface() {
+            if isInitiatorp2p {
                 createOfferWithIceRestart(streamId: streamId)
             }
         }
@@ -856,45 +859,5 @@ extension WebRTCClient: RTCPeerConnectionDelegate {
 extension WebRTCClient {
     func printf(_ msg: String) {
         debugPrint("--> AntMediaSDK: " + msg)
-    }
-    
-    func hasActiveNetworkInterface(timeout: TimeInterval = 1.5) -> Bool {
-
-        // 1. Fast-path: if the OS says we have no interface at all, bail out early
-        guard osClaimsNetwork() else { return false }
-
-        // 2. Probe the Internet with a short HTTP HEAD request
-        let url = URL(string: "https://www.google.com/generate_204")!
-        var probeOK = false
-
-        let semaphore = DispatchSemaphore(value: 0)
-        var request  = URLRequest(url: url)
-        request.httpMethod = "HEAD"
-        request.timeoutInterval = timeout
-
-        URLSession.shared.dataTask(with: request) { _, response, error in
-            probeOK = (error == nil && (response as? HTTPURLResponse)?.statusCode == 204)
-            semaphore.signal()
-        }.resume()
-
-        _ = semaphore.wait(timeout: .now() + timeout)
-        return probeOK
-    }
-
-    // MARK: - Private helper – only checks interface state (no traffic)
-    private func osClaimsNetwork() -> Bool {
-        let monitor = NWPathMonitor()
-        let sem     = DispatchSemaphore(value: 0)
-        var status  = false
-        monitor.pathUpdateHandler = { path in
-            status = (path.status == .satisfied)
-            sem.signal()
-        }
-        let q = DispatchQueue(label: "net")
-        monitor.start(queue: q)
-        _ = sem.wait(timeout: .now() + 0.2)
-        monitor.cancel()
-        return status
-        
     }
 }
