@@ -320,8 +320,8 @@ class WebRTCClient: NSObject {
     
     public func restartICE() {
         if iceConnectionState == .failed {
-            peerConnection?.restartIce()
-//            createOfferWithIceRestart(streamId: streamId)
+//            peerConnection?.restartIce()
+            createOfferWithIceRestart(streamId: streamId)
         }
     }
     
