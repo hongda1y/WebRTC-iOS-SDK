@@ -9,6 +9,7 @@ import Foundation
 import AVFoundation
 import WebRTC
 import ReplayKit
+import Network
 
 class WebRTCClient: NSObject {
     
@@ -321,7 +322,9 @@ class WebRTCClient: NSObject {
     public func restartICE() {
         if iceConnectionState == .failed {
 //            peerConnection?.restartIce()
-            createOfferWithIceRestart(streamId: streamId)
+            if hasActiveNetworkInterface() {
+                createOfferWithIceRestart(streamId: streamId)
+            }
         }
     }
     
@@ -853,5 +856,23 @@ extension WebRTCClient: RTCPeerConnectionDelegate {
 extension WebRTCClient {
     func printf(_ msg: String) {
         debugPrint("--> AntMediaSDK: " + msg)
+    }
+    
+    func hasActiveNetworkInterface() -> Bool {
+        let monitor = NWPathMonitor()
+        let semaphore = DispatchSemaphore(value: 0)
+        var hasNet = false
+        
+        monitor.pathUpdateHandler = { path in
+            hasNet = (path.status == .satisfied)          // Wi-Fi, cell, wired, hotspot, etc.
+            semaphore.signal()
+        }
+        let queue = DispatchQueue(label: "networkCheck")
+        monitor.start(queue: queue)
+        
+        // give it max 200 ms to answer (usually returns immediately)
+        _ = semaphore.wait(timeout: .now() + .milliseconds(200))
+        monitor.cancel()
+        return hasNet
     }
 }
