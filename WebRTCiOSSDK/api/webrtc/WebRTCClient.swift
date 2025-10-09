@@ -321,7 +321,7 @@ class WebRTCClient: NSObject {
     public func restartICE() {
         if iceConnectionState == .failed {
             peerConnection?.restartIce()
-            createOfferWithIceRestart(streamId: streamId)
+//            createOfferWithIceRestart(streamId: streamId)
         }
     }
     
@@ -841,7 +841,8 @@ extension WebRTCClient: RTCPeerConnectionDelegate {
     
     
     func peerConnectionShouldNegotiate(_ peerConnection: RTCPeerConnection) {
-        //printf("---> peerConnectionShouldNegotiate")
+        printf("---> peerConnectionShouldNegotiate")
+        createOfferWithIceRestart(streamId: streamId)
     }
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didRemove candidates: [RTCIceCandidate]) {
