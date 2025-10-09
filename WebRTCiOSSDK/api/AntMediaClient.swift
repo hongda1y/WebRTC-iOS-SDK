@@ -1024,11 +1024,11 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                 //if there is a webRTCClient in the map, it means it's disconnected due to network issue
                 if webRTCClientMap[streamId] != nil {
                     
-                    let iceState = webRTCClientMap[streamId]?.getIceConnectionState()
-                    
-                    if iceState == .failed {
-                        webRTCClientMap[streamId]?.restartICE()
-                    }
+//                    let iceState = webRTCClientMap[streamId]?.getIceConnectionState()
+//                    
+//                    if iceState == .failed {
+//                        webRTCClientMap[streamId]?.restartICE()
+//                    }
                     
                     //                    //check the ice state if this method is triggered consequently
                     //                    if ( iceState == RTCIceConnectionState.closed ||
