@@ -858,21 +858,43 @@ extension WebRTCClient {
         debugPrint("--> AntMediaSDK: " + msg)
     }
     
-    func hasActiveNetworkInterface() -> Bool {
-        let monitor = NWPathMonitor()
+    func hasActiveNetworkInterface(timeout: TimeInterval = 1.5) -> Bool {
+
+        // 1. Fast-path: if the OS says we have no interface at all, bail out early
+        guard osClaimsNetwork() else { return false }
+
+        // 2. Probe the Internet with a short HTTP HEAD request
+        let url = URL(string: "https://www.google.com/generate_204")!
+        var probeOK = false
+
         let semaphore = DispatchSemaphore(value: 0)
-        var hasNet = false
-        
-        monitor.pathUpdateHandler = { path in
-            hasNet = (path.status == .satisfied)          // Wi-Fi, cell, wired, hotspot, etc.
+        var request  = URLRequest(url: url)
+        request.httpMethod = "HEAD"
+        request.timeoutInterval = timeout
+
+        URLSession.shared.dataTask(with: request) { _, response, error in
+            probeOK = (error == nil && (response as? HTTPURLResponse)?.statusCode == 204)
             semaphore.signal()
+        }.resume()
+
+        _ = semaphore.wait(timeout: .now() + timeout)
+        return probeOK
+    }
+
+    // MARK: - Private helper – only checks interface state (no traffic)
+    private func osClaimsNetwork() -> Bool {
+        let monitor = NWPathMonitor()
+        let sem     = DispatchSemaphore(value: 0)
+        var status  = false
+        monitor.pathUpdateHandler = { path in
+            status = (path.status == .satisfied)
+            sem.signal()
         }
-        let queue = DispatchQueue(label: "networkCheck")
-        monitor.start(queue: queue)
-        
-        // give it max 200 ms to answer (usually returns immediately)
-        _ = semaphore.wait(timeout: .now() + .milliseconds(200))
+        let q = DispatchQueue(label: "net")
+        monitor.start(queue: q)
+        _ = sem.wait(timeout: .now() + 0.2)
         monitor.cancel()
-        return hasNet
+        return status
+        
     }
 }
