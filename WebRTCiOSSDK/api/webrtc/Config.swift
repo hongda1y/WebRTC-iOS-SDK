@@ -37,7 +37,12 @@ public class Config: NSObject {
     }
     
     static func createDefaultConstraint() -> RTCMediaConstraints {
-        return RTCMediaConstraints.init(mandatoryConstraints: nil, optionalConstraints: defaultConstraints)
+        let hdConstraints = [
+            "maxWidth":  "1920",
+            "maxHeight": "1080",
+            "maxFrameRate": "30"
+        ]
+        return RTCMediaConstraints.init(mandatoryConstraints: hdConstraints, optionalConstraints: defaultConstraints)
     }
     
     static func createTestConstraints() -> RTCMediaConstraints {
