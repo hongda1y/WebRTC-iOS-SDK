@@ -209,7 +209,7 @@ final class CustomCameraVideoCapturer: RTCVideoCapturer {
     
     private func configureVideoDataOutput() {
         videoDataOutput.videoSettings = [
-            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
+            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_420YpCbCr8BiPlanarFullRange
         ]
         videoDataOutput.alwaysDiscardsLateVideoFrames = true // Optimize for real-time performance
         videoDataOutput.setSampleBufferDelegate(self, queue: frameProcessingQueue)
