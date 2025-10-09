@@ -19,7 +19,8 @@ private enum Constants {
     static let nanosecondsPerSecond: Int64 = 1_000_000_000
     static let supportedPixelFormats: Set<FourCharCode> = [
         kCVPixelFormatType_420YpCbCr8PlanarFullRange,
-        kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
+        kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange,
+        kCVPixelFormatType_32BGRA
     ]
 }
 
