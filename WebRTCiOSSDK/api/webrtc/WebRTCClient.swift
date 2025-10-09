@@ -842,7 +842,7 @@ extension WebRTCClient: RTCPeerConnectionDelegate {
     
     func peerConnectionShouldNegotiate(_ peerConnection: RTCPeerConnection) {
         printf("---> peerConnectionShouldNegotiate")
-        createOfferWithIceRestart(streamId: streamId)
+        
     }
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didRemove candidates: [RTCIceCandidate]) {
