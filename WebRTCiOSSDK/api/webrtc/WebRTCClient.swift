@@ -275,7 +275,7 @@ class WebRTCClient: NSObject {
     }
     
     private func createOfferWithIceRestart(streamId: String) {
-        let constraint = Config.createAudioVideoConstraints()
+        let constraint = Config.createAudioVideoConstraintsForRestart()
         
         peerConnection?.offer(for: constraint, completionHandler: { [weak self] sdp, error in
             guard let self = self else { return }
