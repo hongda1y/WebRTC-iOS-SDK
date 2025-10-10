@@ -39,11 +39,9 @@ public class Config: NSObject {
     static func createAudioVideoConstraintsForRestart() -> RTCMediaConstraints {
         RTCMediaConstraints(
             mandatoryConstraints: [
-                "OfferToReceiveAudio": "true",
-                "OfferToReceiveVideo": "true",
                 "IceRestart": "true"
             ],
-            optionalConstraints: defaultConstraints
+            optionalConstraints: nil
         )
     }
     
