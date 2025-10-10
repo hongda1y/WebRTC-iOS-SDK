@@ -36,6 +36,17 @@ public class Config: NSObject {
         return RTCMediaConstraints.init(mandatoryConstraints: constraints, optionalConstraints: defaultConstraints)
     }
     
+    static func createAudioVideoConstraintsForRestart() -> RTCMediaConstraints {
+        RTCMediaConstraints(
+            mandatoryConstraints: [
+                "OfferToReceiveAudio": "true",
+                "OfferToReceiveVideo": "true",
+                "IceRestart": "true"
+            ],
+            optionalConstraints: defaultConstraints
+        )
+    }
+    
     static func createDefaultConstraint() -> RTCMediaConstraints {
         let hdConstraints = [
             "maxWidth":  "1920",
