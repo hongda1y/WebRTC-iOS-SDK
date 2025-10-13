@@ -459,6 +459,12 @@ class WebRTCClient: NSObject {
         var selectedFormat: AVCaptureDevice.Format? = nil
         for supportedFormat in supportedFormats {
             let dimension = CMVideoFormatDescriptionGetDimensions(supportedFormat.formatDescription)
+            
+            if dimension.width  == Int32(targetWidth) && dimension.height == Int32(targetHeight) {
+                selectedFormat = supportedFormat
+                break
+            }
+            
             let diff = abs(Int32(targetWidth) - dimension.width) + abs(Int32(targetHeight) - dimension.height);
             if (diff < currentDiff) {
                 selectedFormat = supportedFormat
