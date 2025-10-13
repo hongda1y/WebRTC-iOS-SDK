@@ -32,6 +32,15 @@ public class Config: NSObject {
         return iceServer
     }
     
+    static func createAudioVideoConstraintsForRestart() -> RTCMediaConstraints {
+        RTCMediaConstraints(
+            mandatoryConstraints: [
+                "IceRestart": "true"
+            ],
+            optionalConstraints: nil
+        )
+    }
+    
     static func createAudioVideoConstraints() -> RTCMediaConstraints {
         return RTCMediaConstraints.init(mandatoryConstraints: constraints, optionalConstraints: defaultConstraints)
     }

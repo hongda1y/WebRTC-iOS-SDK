@@ -69,6 +69,8 @@ class WebRTCClient: NSObject {
     private var externalAudio: Bool = false;
     
     private var cameraSourceFPS: Int = 30;
+    
+    private var isInitiatorp2p: Bool = false
     /*
      State of the connection
      */
@@ -265,13 +267,15 @@ class WebRTCClient: NSObject {
                                   "token": token ?? ""] as [String : Any]
                 }
                 
+                isInitiatorp2p = true
+                
                 delegate?.sendMessage(offerDict)
             }
         })
     }
     
     private func createOfferWithIceRestart(streamId: String) {
-        let constraint = Config.createAudioVideoConstraints()
+        let constraint = Config.createAudioVideoConstraintsForRestart()
         
         peerConnection?.offer(for: constraint, completionHandler: { [weak self] sdp, error in
             guard let self = self else { return }
@@ -320,8 +324,10 @@ class WebRTCClient: NSObject {
     
     public func restartICE() {
         if iceConnectionState == .failed {
-            peerConnection?.restartIce()
-            createOfferWithIceRestart(streamId: streamId)
+//            peerConnection?.restartIce()
+            if isInitiatorp2p {
+                createOfferWithIceRestart(streamId: streamId)
+            }
         }
     }
     
