@@ -62,6 +62,7 @@
 		DC7D9C482E1F745A00E71564 /* CustomCameraVideoCapturer.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC7D9C472E1F745A00E71564 /* CustomCameraVideoCapturer.swift */; };
 		DCA19E792E8BD0D500337DD5 /* BlackBackgroundVideoCapturer.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCA19E782E8BD0D500337DD5 /* BlackBackgroundVideoCapturer.swift */; };
 		DCAA41752DDD71C400B3E288 /* VideoSample.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = DCAA41742DDD71C400B3E288 /* VideoSample.mp4 */; };
+		DCB3B1412E9E29210046F38C /* VideoMetaData.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCB3B1402E9E29210046F38C /* VideoMetaData.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -212,6 +213,7 @@
 		DC7D9C472E1F745A00E71564 /* CustomCameraVideoCapturer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCameraVideoCapturer.swift; sourceTree = "<group>"; };
 		DCA19E782E8BD0D500337DD5 /* BlackBackgroundVideoCapturer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlackBackgroundVideoCapturer.swift; sourceTree = "<group>"; };
 		DCAA41742DDD71C400B3E288 /* VideoSample.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = VideoSample.mp4; sourceTree = "<group>"; };
+		DCB3B1402E9E29210046F38C /* VideoMetaData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoMetaData.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -337,6 +339,7 @@
 		A8DABFE22A063A020007CDE7 /* api */ = {
 			isa = PBXGroup;
 			children = (
+				DCB3B1402E9E29210046F38C /* VideoMetaData.swift */,
 				DC6BEC6A2DE850F2007FC094 /* PreviewedCameraManager.swift */,
 				DC6BEC612DE5A2E8007FC094 /* RTCVirtualBackground.swift */,
 				DC6BEC5F2DE5A2CE007FC094 /* RTCVideoPipe.swift */,
@@ -699,6 +702,7 @@
 				DC6BEC6B2DE850F2007FC094 /* PreviewedCameraManager.swift in Sources */,
 				A8DABFF42A063A020007CDE7 /* RTCCustomFrameCapturer.swift in Sources */,
 				A8DABFF52A063A020007CDE7 /* Config.swift in Sources */,
+				DCB3B1412E9E29210046F38C /* VideoMetaData.swift in Sources */,
 				DC7D9C482E1F745A00E71564 /* CustomCameraVideoCapturer.swift in Sources */,
 				DC6BEC622DE5A2E8007FC094 /* RTCVirtualBackground.swift in Sources */,
 				A8DABFF12A063A020007CDE7 /* AntMediaError.swift in Sources */,

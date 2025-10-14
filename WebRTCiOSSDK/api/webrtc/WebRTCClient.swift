@@ -415,9 +415,9 @@ class WebRTCClient: NSObject {
         self.setVideoEnabled(enabled: !self.videoEnabled)
     }
     
-    func isVideoEnabled() -> Bool {
-        return self.videoEnabled;
-    }
+    func isVideoEnabled() -> Bool { videoEnabled }
+    
+    public func isScreenShare() -> Bool { useExternalCameraSource }
     
     public func setVideoEnabled(enabled:Bool){
         self.videoEnabled = enabled
