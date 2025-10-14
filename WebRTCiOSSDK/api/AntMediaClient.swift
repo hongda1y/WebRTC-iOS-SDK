@@ -627,6 +627,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         
         webRTCClientMap[(publisherStreamId ?? p2pStreamId) ?? ""]?.switchToScreencast(screenCast)
         sendScreencastStatusNotification(enabled: screenCast)
+        updateMetaData()
     }
     
     /*
