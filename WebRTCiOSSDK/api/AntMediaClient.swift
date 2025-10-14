@@ -155,16 +155,6 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         var streamName: String?
     }
     
-    struct VideoMetaData: Codable {
-        var isMicMuted: Bool?
-        var isCameraOff: Bool?
-        var userId: Int?
-        var username: String?
-        var profilePicture: String?
-        var role: String?
-        var entryId: Int?
-    }
-    
     public override init() {
     }
     
@@ -237,9 +227,16 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     }
     
     
-    public func updateMetaData(isMicMuted: Bool, isCameraOff: Bool) {
-        let metaData = VideoMetaData(isMicMuted: isMicMuted,
-                                     isCameraOff: isCameraOff,
+    private func updateMetaData() {
+        guard let audioEnabled = webRTCClientMap[getStreamId()]?.isAudioEnabled(),
+              let videoEnabled = webRTCClientMap[getStreamId()]?.isVideoEnabled(),
+              let isScreenShare = webRTCClientMap[getStreamId()]?.isScreenShare() else {
+            return
+        }
+        
+        let metaData = VideoMetaData(isMicMuted: !audioEnabled,
+                                     isCameraOff: !videoEnabled,
+                                     isScreenShare: isScreenShare,
                                      userId: userId,
                                      username: username,
                                      profilePicture: profilePicture,
@@ -247,11 +244,6 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                                      entryId: entryId)
         
         let metaDataJSON = try! JSONEncoder().encode(metaData)
-        
-        //        guard let metaDataJSON = try? JSONSerialization.data(withJSONObject: metaData, options: .prettyPrinted) else {
-        //            print("Something is wrong while converting dictionary to JSON data.")
-        //            return
-        //        }
         
         let metaDataJSONString = String(data: metaDataJSON, encoding: .utf8)
         
@@ -287,6 +279,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         
         let metaData = VideoMetaData(isMicMuted: !audioEnable,
                                      isCameraOff: !videoEnable,
+                                     isScreenShare: useExternalCameraSource,
                                      userId: userId,
                                      username: username,
                                      profilePicture: profilePicture,
@@ -634,6 +627,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         
         webRTCClientMap[(publisherStreamId ?? p2pStreamId) ?? ""]?.switchToScreencast(screenCast)
         sendScreencastStatusNotification(enabled: screenCast)
+        updateMetaData()
     }
     
     /*
@@ -722,10 +716,11 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
      Toggle publisher audo
      */
     open func toggleAudio() {
-        self.webRTCClientMap[self.publisherStreamId ?? (self.p2pStreamId ?? "")]?.toggleAudioEnabled()
+        webRTCClientMap[getStreamId()]?.toggleAudioEnabled()
         
-        if let audioEnabled = self.webRTCClientMap[self.publisherStreamId ?? (self.p2pStreamId ?? "")]?.isAudioEnabled() {
-            self.sendAudioTrackStatusNotification(enabled: audioEnabled)
+        if let audioEnabled = webRTCClientMap[getStreamId()]?.isAudioEnabled() {
+            sendAudioTrackStatusNotification(enabled: audioEnabled)
+            updateMetaData()
         }
         
     }
@@ -744,8 +739,9 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
      Set publisher audio track
      */
     open func setAudioTrack(enableTrack: Bool) {
-        self.webRTCClientMap[self.publisherStreamId ?? (self.p2pStreamId ?? "")]?.setAudioEnabled(enabled: enableTrack);
-        self.sendAudioTrackStatusNotification(enabled:enableTrack);
+        webRTCClientMap[getPublisherStreamId()]?.setAudioEnabled(enabled: enableTrack)
+        sendAudioTrackStatusNotification(enabled:enableTrack)
+        updateMetaData()
     }
     
     
@@ -809,6 +805,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         
         if let videoEnabled = webRTCClientMap[getPublisherStreamId()]?.isVideoEnabled() {
             sendVideoTrackStatusNotification(enabled: videoEnabled)
+            updateMetaData()
         }
     }
     
@@ -854,10 +851,10 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         sendNotification(eventType: eventType, streamId: id)
     }
     
-    open func setVideoTrack(enableTrack: Bool)
-    {
-        self.webRTCClientMap[getPublisherStreamId()]?.setVideoEnabled(enabled: enableTrack);
-        self.sendVideoTrackStatusNotification(enabled:enableTrack);
+    open func setVideoTrack(enableTrack: Bool) {
+        webRTCClientMap[getPublisherStreamId()]?.setVideoEnabled(enabled: enableTrack)
+        sendVideoTrackStatusNotification(enabled:enableTrack)
+        updateMetaData()
     }
     
     open func getCurrentMode() -> AntMediaClientMode {
