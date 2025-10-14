@@ -19,6 +19,25 @@ public struct VideoMetaData: Codable {
     
     public init() {}
     
+    public init(isMicMuted: Bool? = nil,
+                isCameraOff: Bool? = nil,
+                isScreenShare: Bool? = nil,
+                userId: Int? = nil,
+                username: String? = nil,
+                profilePicture: String? = nil,
+                role: String? = nil,
+                entryId: Int? = nil) {
+        
+        self.isMicMuted = isMicMuted
+        self.isCameraOff = isCameraOff
+        self.isScreenShare = isScreenShare
+        self.userId = userId
+        self.username = username
+        self.profilePicture = profilePicture
+        self.role = role
+        self.entryId = entryId
+    }
+    
     public static func create(_ payload: [String : Any]) -> Self? {
         guard let metaDataString = payload["metaData"] as? String,
               let data = metaDataString.data(using: .utf8) else {
