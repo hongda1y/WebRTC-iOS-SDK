@@ -610,9 +610,11 @@ class WebRTCClient: NSObject {
                 }
             }
             
-            let captureStarted = startCapture()
-            if (!captureStarted) {
-                return nil;
+            if isVideoEnabled() {
+                let captureStarted = startCapture()
+                if !captureStarted {
+                    return nil
+                }
             }
 #endif
             
