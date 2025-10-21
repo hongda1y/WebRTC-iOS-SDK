@@ -131,6 +131,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     
     private var rtcFileName: String = ""
     
+    private var jsonEncoder = JSONEncoder()
     /**
      Degradation preference when publishing streams. By default its values is maintainResolution because when resolution changes HLS playback does not play in safari
      */
@@ -243,7 +244,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                                      role: role,
                                      entryId: entryId)
         
-        let metaDataJSON = try! JSONEncoder().encode(metaData)
+        let metaDataJSON = try! jsonEncoder.encode(metaData)
         
         let metaDataJSONString = String(data: metaDataJSON, encoding: .utf8)
         
@@ -286,7 +287,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                                      role: role,
                                      entryId: entryId)
         
-        let metaDataJSON = try! JSONEncoder().encode(metaData)
+        let metaDataJSON = try! jsonEncoder.encode(metaData)
         let metaDataJSONString = String(data: metaDataJSON, encoding: .utf8)
         
         let handShakeMesage = HandshakeMessage(command: mode.getName(),
@@ -299,7 +300,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                                                metaData: metaDataJSONString!,
                                                streamName: username ?? streamId)
         
-        let json = try! JSONEncoder().encode(handShakeMesage)
+        let json = try! jsonEncoder.encode(handShakeMesage)
         return String(data: json, encoding: .utf8)!
     }
     public func getLeaveMessage(streamId: String, mode:AntMediaClientMode) -> [String: String] {
@@ -1664,6 +1665,9 @@ extension AntMediaClient: WebSocketDelegate {
             //too keep the connetion alive send ping command for every 10 seconds
             pingTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { [weak self] pingTimer in
                 guard let self = self else { return }
+                
+                printf("Sent ping to websocket")
+                
                 let jsonString = self.getPingMessage().json
                 self.webSocket?.write(string: jsonString)
             }
