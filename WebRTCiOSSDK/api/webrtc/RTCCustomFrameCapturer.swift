@@ -25,6 +25,23 @@ class RTCCustomFrameCapturer: RTCVideoCapturer {
     private var frameRateIntervalNanoSeconds : Float64 = 0
     
     
+    // Orientation
+    // Thread-safe orientation tracking
+    private let orientationQueue = DispatchQueue(label: "orientation.queue", qos: .utility)
+    private var _currentInterfaceOrientation: UIInterfaceOrientation = .unknown
+    private var currentInterfaceOrientation: UIInterfaceOrientation {
+        get {
+            return orientationQueue.sync { _currentInterfaceOrientation }
+        }
+        set {
+            orientationQueue.async { [weak self] in
+                guard let self = self else { return }
+                self._currentInterfaceOrientation = newValue
+            }
+        }
+    }
+    
+    
     // if externalCapture is true, it means that capture method is called from an external component.
     // externalComponent is the BroadcastExtension
     private var externalCapture: Bool
@@ -44,6 +61,18 @@ class RTCCustomFrameCapturer: RTCVideoCapturer {
             
         super.init(delegate: delegate)
         
+        // Initialize orientation safely
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.currentInterfaceOrientation = self.interfaceOrientation
+        }
+        
+        addNotificationObservers()
+        
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
     
     public func setWebRTCClient(webRTCClient: WebRTCClient) {
@@ -74,6 +103,10 @@ class RTCCustomFrameCapturer: RTCVideoCapturer {
             cropHeight: height,
             cropX: 0,
             cropY: 0)
+        
+        let rotation = videoRotation(
+            for: currentInterfaceOrientation
+        )
         
         let rtcVideoFrame = RTCVideoFrame(
                     buffer: rtcPixelBuffer,
@@ -195,3 +228,50 @@ class RTCCustomFrameCapturer: RTCVideoCapturer {
    
 }
 
+
+private extension RTCCustomFrameCapturer {
+    
+    func addNotificationObservers() {
+        let center = NotificationCenter.default
+        
+        // Orientation changes
+        center.addObserver(
+            self,
+            selector: #selector(orientationDidChange),
+            name: UIApplication.didChangeStatusBarOrientationNotification,
+            object: nil
+        )
+    }
+    
+    @objc func orientationDidChange() {
+        currentInterfaceOrientation = interfaceOrientation
+    }
+    
+    private var interfaceOrientation: UIInterfaceOrientation {
+        if #available(iOS 13.0, *),
+           let windowScene = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first(where: { $0.activationState == .foregroundActive }) {
+            return windowScene.interfaceOrientation
+        } else {
+            return UIApplication.shared.statusBarOrientation
+        }
+    }
+    
+    private func videoRotation(for orientation: UIInterfaceOrientation) -> RTCVideoRotation {
+        switch orientation {
+        case .portrait:
+            return ._90
+        case .portraitUpsideDown:
+            return ._270
+        case .landscapeLeft:
+            return ._180
+        case .landscapeRight:
+            return ._0
+        case .unknown:
+            return ._90
+        @unknown default:
+            return ._90
+        }
+    }
+}
