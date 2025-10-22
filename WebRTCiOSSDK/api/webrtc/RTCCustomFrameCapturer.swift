@@ -261,17 +261,17 @@ private extension RTCCustomFrameCapturer {
     private func videoRotation(for orientation: UIInterfaceOrientation) -> RTCVideoRotation {
         switch orientation {
         case .portrait:
-            return ._90
-        case .portraitUpsideDown:
-            return ._270
-        case .landscapeLeft:
-            return ._180
-        case .landscapeRight:
             return ._0
+        case .portraitUpsideDown:
+            return ._180
+        case .landscapeLeft:
+            return ._90  // device rotated 90° counter-clockwise
+        case .landscapeRight:
+            return ._270 // device rotated 90° clockwise
         case .unknown:
-            return ._90
+            return ._0
         @unknown default:
-            return ._90
+            return ._0
         }
     }
 }
