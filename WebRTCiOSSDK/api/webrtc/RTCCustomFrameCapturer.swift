@@ -99,6 +99,8 @@ class RTCCustomFrameCapturer: RTCVideoCapturer {
     }
     
     private func updateOrientationFromMotion(_ motion: CMDeviceMotion) {
+        guard isAppInBackground else { return }
+        
         let gravity = motion.gravity
         
         // Determine orientation based on gravity vector
