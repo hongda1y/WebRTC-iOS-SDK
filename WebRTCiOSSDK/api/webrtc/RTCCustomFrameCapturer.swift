@@ -171,6 +171,8 @@ class RTCCustomFrameCapturer: RTCVideoCapturer {
             timeStampNs: Int64(timeStampNs)
         )
         
+        print("Rotation: \(finalRotation)")
+        
         self.delegate?.capturer(self, didCapture: rtcVideoFrame.newI420())
         lastSentFrameTimeStampNanoSeconds = Int64(timeStampNs)
     }
