@@ -163,30 +163,7 @@ class RTCCustomFrameCapturer: RTCVideoCapturer {
         let width = Int32(CVPixelBufferGetWidth(pixelBuffer))
         let height = Int32(CVPixelBufferGetHeight(pixelBuffer))
         
-        // Adjust scaling based on rotation
-        // For landscape orientations, swap width/height calculations
-        var scaledWidth: Int32
-        if finalRotation == ._90 || finalRotation == ._270 {
-            // Landscape: targetHeight represents the shorter dimension
-            scaledWidth = (height * Int32(self.targetHeight)) / width
-        } else {
-            // Portrait: standard scaling
-            scaledWidth = (width * Int32(self.targetHeight)) / height
-        }
-        
-        // Ensure even width for video encoding compatibility
-        if scaledWidth % 2 == 1 {
-            scaledWidth += 1
-        }
-        
-        let rtcPixelBuffer = RTCCVPixelBuffer(
-            pixelBuffer: pixelBuffer,
-            adaptedWidth: scaledWidth,
-            adaptedHeight: Int32(self.targetHeight),
-            cropWidth: width,
-            cropHeight: height,
-            cropX: 0,
-            cropY: 0)
+        let rtcPixelBuffer = RTCCVPixelBuffer(pixelBuffer: pixelBuffer)
         
         let rtcVideoFrame = RTCVideoFrame(
             buffer: rtcPixelBuffer,
