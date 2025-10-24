@@ -379,21 +379,18 @@ extension CustomCameraVideoCapturer: AVCaptureVideoDataOutputSampleBufferDelegat
             return
         }
         
-        // 1. Create a CIImage from the pixel buffer
-        let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
-        
-        // 2. Get the EXIF orientation (kCGImagePropertyOrientation) from the CIImage.
-        // This value often reflects the intended orientation for the frame.
-        let exifOrientation = ciImage.properties[kCGImagePropertyOrientation as String] as? Int ?? 1
-        
-        // 3. Convert the integer EXIF orientation to a UIImage.Orientation
-        let imageOrientation = UIImage.Orientation(rawValue: exifOrientation) ?? .up
-        
-        // Now 'imageOrientation' is the correct orientation (e.g., .up, .right, .left)
-        // you should use when converting the CIImage to a UIImage.
-        
-        // Example:
-        print("Orientation: \(imageOrientation)")
+        if let attachments = CMCopyDictionaryOfAttachments(
+            allocator: kCFAllocatorDefault,
+            target: sampleBuffer,
+            attachmentMode: kCMAttachmentMode_ShouldPropagate
+        ) as? [String: Any] {
+            
+            // Get the orientation value
+            if let orientationValue = attachments[kCGImagePropertyOrientation as String] as? UInt32 {
+                let cgOrientation = CGImagePropertyOrientation(rawValue: orientationValue) ?? .up
+                print("Orientation: \(cgOrientation)")
+            }
+        }
         
         // Determine camera position efficiently
         let isUsingFrontCamera = connection.inputPorts
