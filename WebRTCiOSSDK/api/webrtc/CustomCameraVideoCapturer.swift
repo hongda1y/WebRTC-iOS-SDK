@@ -374,7 +374,7 @@ extension CustomCameraVideoCapturer: AVCaptureVideoDataOutputSampleBufferDelegat
         if #available(iOS 17.0, *) {
             print(#function, connection.videoRotationAngle)
         } else {
-            print(#function, connection.videoOrientation)
+            print(#function, connection.videoOrientation.rawValue)
         }
         
         // Early validation for performance
