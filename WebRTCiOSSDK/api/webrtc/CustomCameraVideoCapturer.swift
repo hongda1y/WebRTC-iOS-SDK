@@ -371,6 +371,12 @@ extension CustomCameraVideoCapturer: AVCaptureVideoDataOutputSampleBufferDelegat
         didOutput sampleBuffer: CMSampleBuffer,
         from connection: AVCaptureConnection
     ) {
+        if #available(iOS 17.0, *) {
+            print(#function, connection.videoRotationAngle)
+        } else {
+            print(#function, connection.videoOrientation)
+        }
+        
         // Early validation for performance
         guard CMSampleBufferGetNumSamples(sampleBuffer) == 1,
               CMSampleBufferIsValid(sampleBuffer),
