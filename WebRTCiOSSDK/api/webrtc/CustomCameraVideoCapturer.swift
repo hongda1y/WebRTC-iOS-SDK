@@ -388,7 +388,7 @@ extension CustomCameraVideoCapturer: AVCaptureVideoDataOutputSampleBufferDelegat
             // Get the orientation value
             if let orientationValue = attachments[kCGImagePropertyOrientation as String] as? UInt32 {
                 let cgOrientation = CGImagePropertyOrientation(rawValue: orientationValue) ?? .up
-                print("Orientation: \(cgOrientation)")
+                print("Orientation: \(cgOrientation.rawValue)")
             }
         }
         
