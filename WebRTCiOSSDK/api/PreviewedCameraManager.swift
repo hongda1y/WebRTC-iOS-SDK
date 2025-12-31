@@ -277,13 +277,35 @@ public class PreviewedCameraManager: NSObject {
 //           }
 
        if #available(iOS 17.0, *) {
-           connection.videoRotationAngle = rotationAngle(from: interfaceOrientation)
+            let isIPad = UIDevice.current.userInterfaceIdiom == .pad
+           if isIPad {
+               connection.videoRotationAngle = rotationAngle(from: interfaceOrientation)
+           }else {
+               connection.videoRotationAngle = rotationAngleIphone(from: interfaceOrientation)
+           }
+           
        } else {
            connection.videoOrientation = videoOrientation(from: interfaceOrientation)
        }
     }
     
-    private func rotationAngle(from orientation: UIInterfaceOrientation) -> CGFloat {
+     private func rotationAngleIphone(from orientation: UIInterfaceOrientation) -> CGFloat {  
+            switch orientation {
+            case .portrait:
+                return 90
+            case .landscapeLeft:
+                return 0      // ✅ flipped
+            case .landscapeRight:
+                return 180        // ✅ flipped
+            case .portraitUpsideDown:
+                return 270
+            default:
+                return 90
+            }
+        }
+    
+    
+    private func rotationAngle(from orientation: UIInterfaceOrientation) -> CGFloat {  
         switch orientation {
         case .portrait:
             return 270
