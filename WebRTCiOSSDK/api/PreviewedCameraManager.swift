@@ -286,15 +286,15 @@ public class PreviewedCameraManager: NSObject {
     private func rotationAngle(from orientation: UIInterfaceOrientation) -> CGFloat {
         switch orientation {
         case .portrait:
-            return 90
+            return 270
         case .landscapeLeft:
             return 180      // ✅ flipped
         case .landscapeRight:
             return 0        // ✅ flipped
         case .portraitUpsideDown:
-            return 270
-        default:
             return 90
+        default:
+            return 270
         }
     }
 
