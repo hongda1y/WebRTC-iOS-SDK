@@ -305,9 +305,9 @@ public class PreviewedCameraManager: NSObject {
         case .portraitUpsideDown:
             return .portraitUpsideDown
         case .landscapeLeft:
-            return .landscapeRight   // ✅ flipped
+            return .landscapeLeft   // ✅ flipped
         case .landscapeRight:
-            return .landscapeLeft    // ✅ flipped
+            return .landscapeRight    // ✅ flipped
         default:
             return .portrait
         }
