@@ -244,37 +244,43 @@ public class PreviewedCameraManager: NSObject {
     //         connection.videoOrientation = videoOrientation
     //     }
     // }
+    
     private func updateConnectionOrientation() {
-//        guard let connection = self.videoConnection, connection.isVideoOrientationSupported else { return }
-//        
-//        var currentDeviceOrientation: UIInterfaceOrientation?
-//        
-//        if #available(iOS 13.0, *) {
-//            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
-//                currentDeviceOrientation = windowScene.interfaceOrientation
-//            }
-//        } else {
-//            // Fallback for older iOS
-//            currentDeviceOrientation = UIApplication.shared.statusBarOrientation
-//        }
-        guard let connection = videoConnection,
-                 connection.isVideoOrientationSupported else { return }
+        
+        guard let connection = self.videoConnection, connection.isVideoOrientationSupported else { return }
+        
+        let interfaceOrientation: UIInterfaceOrientation
+        
+        if #available(iOS 13.0, *) {
+            if let scene = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })
+                .first {
+                interfaceOrientation = scene.interfaceOrientation
+            } else {
+                interfaceOrientation = .portrait
+            }
+        } else {
+            // Fallback for older iOS
+            interfaceOrientation = .portrait
+        }
+//        guard let connection = videoConnection,
+//                 connection.isVideoOrientationSupported else { return }
+//
+//           let interfaceOrientation: UIInterfaceOrientation
+//
+//           if let scene = UIApplication.shared.connectedScenes
+//               .compactMap({ $0 as? UIWindowScene })
+//               .first {
+//               interfaceOrientation = scene.interfaceOrientation
+//           } else {
+//               interfaceOrientation = .portrait
+//           }
 
-           let interfaceOrientation: UIInterfaceOrientation
-
-           if let scene = UIApplication.shared.connectedScenes
-               .compactMap({ $0 as? UIWindowScene })
-               .first {
-               interfaceOrientation = scene.interfaceOrientation
-           } else {
-               interfaceOrientation = .portrait
-           }
-
-           if #available(iOS 17.0, *) {
-               connection.videoRotationAngle = rotationAngle(from: interfaceOrientation)
-           } else {
-               connection.videoOrientation = videoOrientation(from: interfaceOrientation)
-           }
+       if #available(iOS 17.0, *) {
+           connection.videoRotationAngle = rotationAngle(from: interfaceOrientation)
+       } else {
+           connection.videoOrientation = videoOrientation(from: interfaceOrientation)
+       }
     }
     
     private func rotationAngle(from orientation: UIInterfaceOrientation) -> CGFloat {
