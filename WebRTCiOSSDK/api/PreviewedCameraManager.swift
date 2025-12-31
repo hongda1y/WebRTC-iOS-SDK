@@ -200,48 +200,110 @@ public class PreviewedCameraManager: NSObject {
         updateConnectionOrientation()
     }
     
+    // private func updateConnectionOrientation() {
+    //     guard let connection = self.videoConnection, connection.isVideoOrientationSupported else { return }
+        
+    //     var currentDeviceOrientation: UIInterfaceOrientation?
+        
+    //     if #available(iOS 13.0, *) {
+    //         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+    //             currentDeviceOrientation = windowScene.interfaceOrientation
+    //         }
+    //     } else {
+    //         // Fallback for older iOS
+    //         currentDeviceOrientation = UIApplication.shared.statusBarOrientation
+    //     }
+        
+    //     let rotationAngle: CGFloat
+    //     switch currentDeviceOrientation {
+    //     case .portrait:
+    //         rotationAngle = 90
+    //     case .portraitUpsideDown:
+    //         rotationAngle = 270
+    //     case .landscapeLeft:
+    //         rotationAngle = 0
+    //     case .landscapeRight:
+    //         rotationAngle = 180
+    //     case .unknown, .none:
+    //         rotationAngle = 0
+    //     @unknown default:
+    //         rotationAngle = 0
+    //     }
+        
+    //     if #available(iOS 17.0, *) {
+    //         connection.videoRotationAngle = rotationAngle
+    //     } else {
+    //         let videoOrientation: AVCaptureVideoOrientation
+    //         switch rotationAngle {
+    //         case 0: videoOrientation = .landscapeLeft
+    //         case 90: videoOrientation = .portrait
+    //         case 180: videoOrientation = .landscapeRight
+    //         case 270: videoOrientation = .portraitUpsideDown
+    //         default: videoOrientation = .landscapeLeft // Should not happen with our defined angles
+    //         }
+    //         connection.videoOrientation = videoOrientation
+    //     }
+    // }
     private func updateConnectionOrientation() {
-        guard let connection = self.videoConnection, connection.isVideoOrientationSupported else { return }
-        
-        var currentDeviceOrientation: UIInterfaceOrientation?
-        
-        if #available(iOS 13.0, *) {
-            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
-                currentDeviceOrientation = windowScene.interfaceOrientation
-            }
-        } else {
-            // Fallback for older iOS
-            currentDeviceOrientation = UIApplication.shared.statusBarOrientation
-        }
-        
-        let rotationAngle: CGFloat
-        switch currentDeviceOrientation {
+//        guard let connection = self.videoConnection, connection.isVideoOrientationSupported else { return }
+//        
+//        var currentDeviceOrientation: UIInterfaceOrientation?
+//        
+//        if #available(iOS 13.0, *) {
+//            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+//                currentDeviceOrientation = windowScene.interfaceOrientation
+//            }
+//        } else {
+//            // Fallback for older iOS
+//            currentDeviceOrientation = UIApplication.shared.statusBarOrientation
+//        }
+        guard let connection = videoConnection,
+                 connection.isVideoOrientationSupported else { return }
+
+           let interfaceOrientation: UIInterfaceOrientation
+
+           if let scene = UIApplication.shared.connectedScenes
+               .compactMap({ $0 as? UIWindowScene })
+               .first {
+               interfaceOrientation = scene.interfaceOrientation
+           } else {
+               interfaceOrientation = .portrait
+           }
+
+           if #available(iOS 17.0, *) {
+               connection.videoRotationAngle = rotationAngle(from: interfaceOrientation)
+           } else {
+               connection.videoOrientation = videoOrientation(from: interfaceOrientation)
+           }
+    }
+    
+    private func rotationAngle(from orientation: UIInterfaceOrientation) -> CGFloat {
+        switch orientation {
         case .portrait:
-            rotationAngle = 90
-        case .portraitUpsideDown:
-            rotationAngle = 270
+            return 90
         case .landscapeLeft:
-            rotationAngle = 0
+            return 180      // ✅ flipped
         case .landscapeRight:
-            rotationAngle = 180
-        case .unknown, .none:
-            rotationAngle = 0
-        @unknown default:
-            rotationAngle = 0
+            return 0        // ✅ flipped
+        case .portraitUpsideDown:
+            return 270
+        default:
+            return 90
         }
-        
-        if #available(iOS 17.0, *) {
-            connection.videoRotationAngle = rotationAngle
-        } else {
-            let videoOrientation: AVCaptureVideoOrientation
-            switch rotationAngle {
-            case 0: videoOrientation = .landscapeLeft
-            case 90: videoOrientation = .portrait
-            case 180: videoOrientation = .landscapeRight
-            case 270: videoOrientation = .portraitUpsideDown
-            default: videoOrientation = .landscapeLeft // Should not happen with our defined angles
-            }
-            connection.videoOrientation = videoOrientation
+    }
+
+    private func videoOrientation(from orientation: UIInterfaceOrientation) -> AVCaptureVideoOrientation {
+        switch orientation {
+        case .portrait:
+            return .portrait
+        case .portraitUpsideDown:
+            return .portraitUpsideDown
+        case .landscapeLeft:
+            return .landscapeRight   // ✅ flipped
+        case .landscapeRight:
+            return .landscapeLeft    // ✅ flipped
+        default:
+            return .portrait
         }
     }
     
