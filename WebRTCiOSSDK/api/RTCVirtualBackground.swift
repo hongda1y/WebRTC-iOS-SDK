@@ -312,7 +312,7 @@ public class RTCVirtualBackground: NSObject {
         }
     }
     
-    func clearBackgroundImage() {
+    public func clearBackgroundImage() {
         backgroundCIImage = nil
         
         if let pool = pixelBufferPool {
