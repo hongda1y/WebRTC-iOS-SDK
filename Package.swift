@@ -1,6 +1,5 @@
 // swift-tools-version:5.3
 import PackageDescription
-
 let package = Package(
     name: "WebRTCiOSSDK",
     platforms: [
@@ -11,33 +10,22 @@ let package = Package(
         .library(
             name: "WebRTCiOSSDK",
             targets: ["WebRTCiOSSDK"]
-        ),
-        // Optional: expose WebRTC directly for apps that want it
-        .library(
-            name: "WebRTC",
-            targets: ["WebRTC"]
         )
+        // REMOVE the separate WebRTC product - it causes duplicate linking!
     ],
     dependencies: [
-        // Third-party dependency
         .package(url: "https://github.com/daltoniam/Starscream.git", from: "4.0.6")
     ],
     targets: [
-        // SDK target
         .target(
             name: "WebRTCiOSSDK",
             dependencies: [
                 "Starscream",
-                "WebRTC"       // link WebRTC to SDK
+                "WebRTC"
             ],
-            path: "WebRTCiOSSDK",
-            linkerSettings: [
-                // Ensure dynamic linking
-                .linkedFramework("WebRTC", .when(platforms: [.iOS]))
-            ]
+            path: "WebRTCiOSSDK"
+            // REMOVE linkerSettings - not needed for binary targets
         ),
-
-        // Binary WebRTC framework
         .binaryTarget(
             name: "WebRTC",
             path: "WebRTC.xcframework"
