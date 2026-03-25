@@ -48,6 +48,21 @@ public class Config: NSObject {
         let config = RTCConfiguration.init()
         config.iceServers = [server]
         config.sdpSemantics = rtcSdpSemantics;
+        return Self.createAntMediaConfiguration()
+    }
+
+    public static func createAntMediaConfiguration() -> RTCConfiguration {
+        let stunServer = RTCIceServer(
+            urlStrings: ["stun:202.124.37.91:3478"]
+        )
+        let turnServer = RTCIceServer(
+            urlStrings: ["turn:202.124.37.91:3478"],
+            username: "antmedia",
+            credential: "GBS@2015"
+        )
+        let config = RTCConfiguration()
+        config.iceServers = [stunServer, turnServer]
+        config.sdpSemantics = rtcSdpSemantics
         return config
     }
 }
