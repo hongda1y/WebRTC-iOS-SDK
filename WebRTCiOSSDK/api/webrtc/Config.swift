@@ -78,13 +78,13 @@ public class Config: NSObject {
                 print("URL: \(url)")
             }
             
-            if server.username.isEmpty {
+            if server.username?.isEmpty == true {
                 print("Auth: ❌ No Username")
             } else {
                 print("Auth: ✅ Username = \(server.username)")
             }
             
-            print("Credential: \(server.credential.isEmpty ? "❌ Empty" : "✅ Set")")
+            print("Credential: \(server.credential?.isEmpty == true ? "❌ Empty" : "✅ Set")")
         }
         
         print("🧊 End ICE Configuration\n")
