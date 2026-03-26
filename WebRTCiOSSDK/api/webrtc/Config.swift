@@ -60,23 +60,34 @@ public class Config: NSObject {
     
     static func createConfiguration(server: RTCIceServer) -> RTCConfiguration {
         let config = RTCConfiguration.init()
-        config.iceServers = [server]
-        config.sdpSemantics = rtcSdpSemantics;
-        return Self.createAntMediaConfiguration()
-    }
-
-    public static func createAntMediaConfiguration() -> RTCConfiguration {
-        let stunServer = RTCIceServer(
-            urlStrings: ["stun:202.124.37.91:3478"]
-        )
-        let turnServer = RTCIceServer(
-            urlStrings: ["turn:202.124.37.91:3478"],
-            username: "antmedia",
-            credential: "GBS@2015"
-        )
-        let config = RTCConfiguration()
-        config.iceServers = [stunServer, turnServer]
+        let turnServer = AntMediaTurnServerConfig.shared.iceServer()
+        config.iceServers = [server,turnServer]
         config.sdpSemantics = rtcSdpSemantics
+
+        logIceServers([server,turnServer])
         return config
     }
+
+    private static func logIceServers(_ servers: [RTCIceServer]) {
+        print("🧊 ICE Configuration:")
+    
+        for (index, server) in servers.enumerated() {
+            print("---- Server \(index + 1) ----")
+            
+            for url in server.urlStrings {
+                print("URL: \(url)")
+            }
+            
+            if server.username.isEmpty {
+                print("Auth: ❌ No Username")
+            } else {
+                print("Auth: ✅ Username = \(server.username)")
+            }
+            
+            print("Credential: \(server.credential.isEmpty ? "❌ Empty" : "✅ Set")")
+        }
+        
+        print("🧊 End ICE Configuration\n")
+    }
+
 }
