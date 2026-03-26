@@ -69,25 +69,25 @@ public class Config: NSObject {
     }
 
     private static func logIceServers(_ servers: [RTCIceServer]) {
-        print("🧊 ICE Configuration:")
+        print(#function,"🧊 ICE Configuration:")
     
         for (index, server) in servers.enumerated() {
-            print("---- Server \(index + 1) ----")
+            print(#function,"---- Server \(index + 1) ----")
             
             for url in server.urlStrings {
-                print("URL: \(url)")
+                print(#function,"URL: \(url)")
             }
             
             if server.username?.isEmpty == true {
-                print("Auth: ❌ No Username")
+                print(#function,"Auth: ❌ No Username")
             } else {
-                print("Auth: ✅ Username = \(server.username)")
+                print(#function,"Auth: ✅ Username = \(server.username)")
             }
             
-            print("Credential: \(server.credential?.isEmpty == true ? "❌ Empty" : "✅ Set")")
+            print(#function,"Credential: \(server.credential?.isEmpty == true ? "❌ Empty" : "✅ Set")")
         }
         
-        print("🧊 End ICE Configuration\n")
+        print(#function,"🧊 End ICE Configuration\n")
     }
 
 }
