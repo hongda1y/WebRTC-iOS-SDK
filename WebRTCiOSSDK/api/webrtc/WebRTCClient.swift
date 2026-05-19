@@ -65,6 +65,9 @@ class WebRTCClient: NSObject {
     private var targetWidth: Int = 480
     private var targetHeight: Int = 360
     
+    // Add to your private properties (near targetHeight, etc.):
+    private var screenShareTargetHeight: Int = 1280
+    
     private var externalVideoCapture: Bool = false;
     
     private var externalAudio: Bool = false;
@@ -76,6 +79,15 @@ class WebRTCClient: NSObject {
      State of the connection
      */
     var iceConnectionState:RTCIceConnectionState = .new;
+    
+    /// Adapts video bitrate / fps / resolution to network + device conditions.
+    /// Created when local media is added, torn down on disconnect.
+    private var adaptiveStreamer: AdaptiveVideoStreamer?
+
+    /// Caller's explicit `setMaxVideoBps` value, if any. Acts as a hard
+    /// ceiling that the adaptive streamer must respect.
+    private var maxVideoBpsCeiling: NSNumber?
+    
     
     private var degradationPreference:RTCDegradationPreference = .maintainResolution;
     
@@ -149,12 +161,26 @@ class WebRTCClient: NSObject {
         }
     }
     
-    public func setMaxVideoBps(maxVideoBps:NSNumber) {
+//    public func setMaxVideoBps(maxVideoBps:NSNumber) {
+//        printf("In setMaxVideoBps:\(maxVideoBps)")
+//        if (maxVideoBps.intValue > 0) {
+//            printf("setMaxVideoBps:\(maxVideoBps)")
+//            self.peerConnection?.setBweMinBitrateBps(nil, currentBitrateBps: nil, maxBitrateBps: maxVideoBps)
+//        }
+//    }
+    public func setMaxVideoBps(maxVideoBps: NSNumber) {
         printf("In setMaxVideoBps:\(maxVideoBps)")
-        if (maxVideoBps.intValue > 0) {
-            printf("setMaxVideoBps:\(maxVideoBps)")
-            self.peerConnection?.setBweMinBitrateBps(nil, currentBitrateBps: nil, maxBitrateBps: maxVideoBps)
-        }
+        guard maxVideoBps.intValue > 0 else { return }
+
+        printf("setMaxVideoBps:\(maxVideoBps)")
+        self.peerConnection?.setBweMinBitrateBps(nil,
+                                                 currentBitrateBps: nil,
+                                                 maxBitrateBps: maxVideoBps)
+
+        // Remember the caller's cap and push it into the streamer so its
+        // adaptive profiles never exceed it.
+        self.maxVideoBpsCeiling = maxVideoBps
+        self.adaptiveStreamer?.bitrateCeilingBps = maxVideoBps.intValue
     }
     
     public func getStats(handler: @escaping (RTCStatisticsReport) -> Void) {
@@ -348,6 +374,11 @@ class WebRTCClient: NSObject {
         printf("disconnecting and releasing resources for \(streamId)")
         //TODO: how to clear all resources
         
+        // ── ADD: stop adaptive streaming first ──────────────────
+        adaptiveStreamer?.stop()
+        adaptiveStreamer = nil
+        // ────────────────────────────────────────────────────────
+        
         if let view = self.localVideoView {
             self.localVideoTrack?.remove(view)
         }
@@ -439,12 +470,36 @@ class WebRTCClient: NSObject {
     
     @discardableResult
     private func startCapture() -> Bool {
-        if let videoCapturer = videoCapturer as? RTCFileVideoCapturer {
-            //            try? AVAudioSession.sharedInstance().setActive(true)
-            videoCapturer.startCapturing(fromFileNamed: rtcFileName) { error in
-                print(error.localizedDescription)
+        
+        if let fileCapturer = videoCapturer as? RTCFileVideoCapturer {
+
+            // RTCFileVideoCapturer requires the file to be in the main bundle,
+            // mp4-wrapped, H.264 video, no audio, yuv420p pixel format. If the
+            // file is missing or wrongly encoded, the error will say so.
+            guard !rtcFileName.isEmpty else {
+                printf("RTCFileVideoCapturer: rtcFileName is empty — call setRTCFile(name:) first or rely on the simulator default.")
+                return false
             }
-            
+
+            // Sanity-check that the file actually shipped with the app, and surface
+            // a clear log instead of a silent failure deep inside WebRTC.
+            let fileStem = (rtcFileName as NSString).deletingPathExtension
+            let fileExt  = (rtcFileName as NSString).pathExtension.isEmpty
+                ? "mp4"
+                : (rtcFileName as NSString).pathExtension
+
+            if Bundle.main.url(forResource: fileStem, withExtension: fileExt) == nil {
+                printf("RTCFileVideoCapturer: '\(rtcFileName)' not found in main bundle. "
+                       + "Add it to the app target's 'Copy Bundle Resources' build phase.")
+                return false
+            }
+
+            fileCapturer.startCapturing(fromFileNamed: rtcFileName) { [weak self] error in
+                // Capturer loops the file internally; this closure fires on errors only.
+                self?.printf("RTCFileVideoCapturer error: \(error.localizedDescription)")
+            }
+
+            printf("RTCFileVideoCapturer started — file=\(rtcFileName)")
             return true
         }
         
@@ -552,77 +607,211 @@ class WebRTCClient: NSObject {
         }
     }
     
+    // Add as a public setter so callers can tune per-device if needed:
+    public func setScreenShareTargetHeight(_ height: Int) {
+        self.screenShareTargetHeight = height
+        printf("Screen-share target height set to \(height)")
+    }
     
-    private func createVideoTrack() -> RTCVideoTrack?  {
-        
+    private func createVideoTrack() -> RTCVideoTrack? {
+
         guard let factory else { return nil }
-        
+
         if useExternalCameraSource {
-            //try with screencast video source
+            // (unchanged screencast path)
             let videoSource = factory.videoSource(forScreenCast: true)
-            videoCapturer = RTCCustomFrameCapturer.init(delegate: videoSource, height: targetHeight, externalCapture: externalVideoCapture, videoEnabled: videoEnabled, audioEnabled: externalAudio, fps:self.cameraSourceFPS);
-            
+            videoCapturer = RTCCustomFrameCapturer.init(
+                delegate: videoSource,
+                height: screenShareTargetHeight,
+                externalCapture: externalVideoCapture,
+                videoEnabled: videoEnabled,
+                audioEnabled: externalAudio,
+                fps: self.cameraSourceFPS
+            )
             (videoCapturer as? RTCCustomFrameCapturer)?.setWebRTCClient(webRTCClient: self)
             (videoCapturer as? RTCCustomFrameCapturer)?.startCapture()
-            let videoTrack = factory.videoTrack(with: videoSource, trackId: "video0")
-            return videoTrack
-        } else {
-            var videoSource = factory.videoSource()
-#if targetEnvironment(simulator)
-            videoCapturer = RTCFileVideoCapturer(delegate: videoSource)
-            let captureStarted = startCapture()
-            if (!captureStarted) {
-                return nil;
-            }
-#else
-            
-            // Check camera permission status
-            let cameraPermissionStatus = AVCaptureDevice.authorizationStatus(for: .video)
-            
-            if cameraPermissionStatus == .denied || cameraPermissionStatus == .restricted {
-                // Camera permission is denied - use black background capturer
-                printf("Camera permission denied or restricted. Using black background capturer.")
-                videoCapturer = BlackBackgroundVideoCapturer(
-                    delegate: videoSource,
-                    width: Int32(targetWidth),
-                    height: Int32(targetHeight),
-                    fps: cameraSourceFPS
-                )
-            } else {
-                
-                if let videoEffect {
-                    pipe = nil
-                    pipe = RTCVideoPipe(videoSource: videoSource)
-                    
-                    switch videoEffect {
-                    case .blur:
-                        pipe?.setBackgroundImage(image: nil)
-                    case .image(let image):
-                        pipe?.setBackgroundImage(image: image)
-                    }
-                    
-                    //                videoCapturer = RTCCameraVideoCapturer(delegate: pipe!)
-                    videoCapturer = CustomCameraVideoCapturer(delegate: pipe!)
-                    
-                } else {
-                    //                videoCapturer = RTCCameraVideoCapturer(delegate: videoSource)
-                    videoCapturer = CustomCameraVideoCapturer(delegate: videoSource)
-                }
-            }
-            
-            if isVideoEnabled() {
-                let captureStarted = startCapture()
-                if !captureStarted {
-                    return nil
-                }
-            }
-#endif
-            
-            let videoTrack = factory.videoTrack(with: videoSource, trackId: "video0")
-//            videoTrack.isEnabled = isVideoEnabled()
-            return videoTrack
+            return factory.videoTrack(with: videoSource, trackId: "video0")
         }
+
+        let videoSource = factory.videoSource()
+
+        #if targetEnvironment(simulator)
+
+        // ── Simulator path: feed bundled sample file into the local pipeline ──
+        printf("[Sim] Using RTCFileVideoCapturer for local source")
+
+        // 1. Default the file name if the caller didn't set one.
+        if rtcFileName.isEmpty {
+            rtcFileName = "sample.mp4"
+            printf("[Sim] rtcFileName defaulted to '\(rtcFileName)'")
+        }
+
+        // 2. Verify the file is actually in the bundle BEFORE handing off to
+        //    WebRTC, so we get a clear error instead of a silent black preview.
+        let stem = (rtcFileName as NSString).deletingPathExtension
+        let ext  = (rtcFileName as NSString).pathExtension.isEmpty
+            ? "mp4"
+            : (rtcFileName as NSString).pathExtension
+
+        guard let bundleURL = Bundle.main.url(forResource: stem, withExtension: ext) else {
+            printf("[Sim] ❌ '\(rtcFileName)' NOT in main bundle. "
+                   + "Add it to your app target's Copy Bundle Resources.")
+            return nil
+        }
+        printf("[Sim] ✅ Found sample at \(bundleURL.path)")
+
+        // 3. Apply video effects pipe if configured (matches camera path).
+        let captureDelegate: RTCVideoCapturerDelegate
+        if let videoEffect {
+            pipe = RTCVideoPipe(videoSource: videoSource)
+            switch videoEffect {
+            case .blur:                   pipe?.setBackgroundImage(image: nil)
+            case .image(let image):       pipe?.setBackgroundImage(image: image)
+            }
+            captureDelegate = pipe!
+            printf("[Sim] Video effect pipe inserted")
+        } else {
+            captureDelegate = videoSource
+        }
+
+        // 4. Create the file capturer wired to whatever delegate we resolved.
+        let fileCapturer = RTCFileVideoCapturer(delegate: captureDelegate)
+        videoCapturer = fileCapturer
+
+        // 5. Start capturing. The closure fires only on error; success is silent.
+        fileCapturer.startCapturing(fromFileNamed: rtcFileName) { [weak self] error in
+            self?.printf("[Sim] ❌ RTCFileVideoCapturer error: \(error.localizedDescription)")
+        }
+        printf("[Sim] startCapturing(fromFileNamed: \(rtcFileName)) issued")
+
+        #else
+
+        // ── Device path (unchanged camera flow) ─────────────────────────────
+        let cameraPermissionStatus = AVCaptureDevice.authorizationStatus(for: .video)
+
+        if cameraPermissionStatus == .denied || cameraPermissionStatus == .restricted {
+            printf("Camera permission denied or restricted. Using black background capturer.")
+            videoCapturer = BlackBackgroundVideoCapturer(
+                delegate: videoSource,
+                width: Int32(targetWidth),
+                height: Int32(targetHeight),
+                fps: cameraSourceFPS
+            )
+        } else {
+            if let videoEffect {
+                pipe = nil
+                pipe = RTCVideoPipe(videoSource: videoSource)
+                switch videoEffect {
+                case .blur:               pipe?.setBackgroundImage(image: nil)
+                case .image(let image):   pipe?.setBackgroundImage(image: image)
+                }
+                videoCapturer = CustomCameraVideoCapturer(delegate: pipe!)
+            } else {
+                videoCapturer = CustomCameraVideoCapturer(delegate: videoSource)
+            }
+        }
+
+        if isVideoEnabled() {
+            let captureStarted = startCapture()
+            if !captureStarted { return nil }
+        }
+
+        #endif
+
+        // 6. Create the track on top of the source. Anything attached as a
+        //    renderer to this track will receive frames from the file/camera.
+        let videoTrack = factory.videoTrack(with: videoSource, trackId: "video0")
+        return videoTrack
     }
+    
+//    private func createVideoTrack() -> RTCVideoTrack?  {
+//        
+//        guard let factory else { return nil }
+//        
+//        if useExternalCameraSource {
+//            //try with screencast video source
+//            let videoSource = factory.videoSource(forScreenCast: true)
+//            videoCapturer = RTCCustomFrameCapturer.init(delegate: videoSource, height: targetHeight, externalCapture: externalVideoCapture, videoEnabled: videoEnabled, audioEnabled: externalAudio, fps:self.cameraSourceFPS);
+//            
+//            (videoCapturer as? RTCCustomFrameCapturer)?.setWebRTCClient(webRTCClient: self)
+//            (videoCapturer as? RTCCustomFrameCapturer)?.startCapture()
+//            let videoTrack = factory.videoTrack(with: videoSource, trackId: "video0")
+//            return videoTrack
+//        } else {
+//            var videoSource = factory.videoSource()
+//            #if targetEnvironment(simulator)
+//            // Simulator has no real camera. Loop a bundled sample file instead so
+//            // developers can still iterate on the call UI / signaling locally.
+//            videoCapturer = RTCFileVideoCapturer(delegate: videoSource)
+//
+//            // Fall back to a default sample file if the caller didn't set one.
+//            // `sample.mp4` must be added to the app bundle (target membership ticked).
+//            if rtcFileName.isEmpty {
+//                rtcFileName = "sample.mp4"
+//            }
+//
+//            let captureStarted = startCapture()
+//            if !captureStarted {
+//                printf("Simulator: failed to start RTCFileVideoCapturer with file=\(rtcFileName)")
+//                return nil
+//            }
+//            #else
+////#if targetEnvironment(simulator)
+//////            videoCapturer = RTCFileVideoCapturer(delegate: videoSource)
+//////            let captureStarted = startCapture()
+//////            if (!captureStarted) {
+//////                return nil;
+//////            }
+////            
+////#else
+//            
+//            // Check camera permission status
+//            let cameraPermissionStatus = AVCaptureDevice.authorizationStatus(for: .video)
+//            
+//            if cameraPermissionStatus == .denied || cameraPermissionStatus == .restricted {
+//                // Camera permission is denied - use black background capturer
+//                printf("Camera permission denied or restricted. Using black background capturer.")
+//                videoCapturer = BlackBackgroundVideoCapturer(
+//                    delegate: videoSource,
+//                    width: Int32(targetWidth),
+//                    height: Int32(targetHeight),
+//                    fps: cameraSourceFPS
+//                )
+//            } else {
+//                
+//                if let videoEffect {
+//                    pipe = nil
+//                    pipe = RTCVideoPipe(videoSource: videoSource)
+//                    
+//                    switch videoEffect {
+//                    case .blur:
+//                        pipe?.setBackgroundImage(image: nil)
+//                    case .image(let image):
+//                        pipe?.setBackgroundImage(image: image)
+//                    }
+//                    
+//                    //                videoCapturer = RTCCameraVideoCapturer(delegate: pipe!)
+//                    videoCapturer = CustomCameraVideoCapturer(delegate: pipe!)
+//                    
+//                } else {
+//                    //                videoCapturer = RTCCameraVideoCapturer(delegate: videoSource)
+//                    videoCapturer = CustomCameraVideoCapturer(delegate: videoSource)
+//                }
+//            }
+//            
+//            if isVideoEnabled() {
+//                let captureStarted = startCapture()
+//                if !captureStarted {
+//                    return nil
+//                }
+//            }
+//        #endif
+//            
+//            let videoTrack = factory.videoTrack(with: videoSource, trackId: "video0")
+////            videoTrack.isEnabled = isVideoEnabled()
+//            return videoTrack
+//        }
+//    }
     
     
     @discardableResult
@@ -654,8 +843,53 @@ class WebRTCClient: NSObject {
         
         delegate?.addLocalStream(streamId: streamId)
         
+        // ── ADD: spin up the adaptive streamer ──────────────────────
+        startAdaptiveStreamer()
+        // ────────────────────────────────────────────────────────────
+        
         return true
     }
+    
+    
+    /// Creates and starts the adaptive streamer for the current sender.
+    /// Idempotent: tearing down the old one before creating a new one.
+    private func startAdaptiveStreamer() {
+
+        // Tear down any previous instance (handles re-creation paths like
+        // switchToScreencast / useVideoEffect).
+        adaptiveStreamer?.stop()
+        adaptiveStreamer = nil
+
+        guard let pc = peerConnection,
+              let sender = videoSender else {
+            printf("startAdaptiveStreamer: no peer connection or video sender; skipping")
+            return
+        }
+
+        // Infer initial content type. If the caller explicitly sets one later
+        // via `setStreamContentType(_:)`, that overrides this guess.
+        let contentType: StreamContentType = useExternalCameraSource ? .screenShare : .general
+
+        let streamer = AdaptiveVideoStreamer(
+            peerConnection: pc,
+            videoSender: sender,
+            contentType: contentType
+        )
+
+        // Honor any pre-existing bitrate cap the caller already configured.
+        streamer.bitrateCeilingBps = maxVideoBpsCeiling?.intValue
+
+        streamer.onProfileChange = { [weak self] profile in
+            self?.printf("Adaptive profile → \(profile.name) "
+                         + "(\(profile.maxBitrateBps/1000)kbps @ \(profile.maxFramerate)fps, "
+                         + "scale \(profile.scaleResolutionDownBy)x)")
+        }
+
+        streamer.start()
+        adaptiveStreamer = streamer
+        printf("Adaptive streamer started (contentType=\(contentType))")
+    }
+    
     
     public func setDegradationPreference(degradationPreference:RTCDegradationPreference) {
         self.degradationPreference = degradationPreference
@@ -697,6 +931,9 @@ class WebRTCClient: NSObject {
             localVideoTrack.add(localVideoView)
             //            localVideoTrack.isEnabled = true
         }
+        
+        adaptiveStreamer?.contentType = screenCast ? .screenShare : .general
+        
     }
     
     public func setRTCFile(name: String) {
@@ -708,6 +945,7 @@ class WebRTCClient: NSObject {
     }
     
     public func useVideoEffect(_ effect: VideoEffect? = nil) {
+        
         self.videoEffect = effect
         
         if videoCapturer is CustomCameraVideoCapturer {
@@ -727,6 +965,9 @@ class WebRTCClient: NSObject {
             localVideoTrack.add(localVideoView)
             //            localVideoTrack.isEnabled = true
         }
+        
+        adaptiveStreamer?.contentType = .general
+        
     }
     
     public func deliverExternalAudio(sampleBuffer: CMSampleBuffer) {

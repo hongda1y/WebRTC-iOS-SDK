@@ -59,13 +59,16 @@ public class Config: NSObject {
     }
     
     static func createConfiguration(server: RTCIceServer) -> RTCConfiguration {
+        
         let config = RTCConfiguration.init()
         let turnServer = AntMediaTurnServerConfig.shared.iceServer()
         config.iceServers = [server,turnServer]
         config.sdpSemantics = rtcSdpSemantics
 
         logIceServers([server,turnServer])
+        
         return config
+        
     }
 
     private static func logIceServers(_ servers: [RTCIceServer]) {

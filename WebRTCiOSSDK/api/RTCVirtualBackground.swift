@@ -39,6 +39,7 @@ public class RTCVirtualBackground: NSObject {
     private var currentProcessingCount = 0
     private let countLock = NSLock()
     
+    
     private func createPersonMaskRequest() -> Any? {
         if #available(iOS 17.0, *) {
             let request = VNGeneratePersonInstanceMaskRequest()
@@ -564,29 +565,35 @@ public class RTCVirtualBackground: NSObject {
     }
     
     
-//     private func applyRotationToBackground(_ background: CIImage, rotation: RTCVideoRotation) -> CIImage {
-// #if os(macOS)
-//         return background.oriented(.upMirrored)
-// #elseif os(iOS)
-//         switch rotation {
-//         case ._90:
-//             return background.oriented(.leftMirrored)
-//         case ._180:
-//             return background.oriented(.downMirrored)
-//         default:
-//             return background
-//         }
-// #endif
-//     }
-    private func applyRotationToBackground(_ background: CIImage, rotation: RTCVideoRotation) -> CIImage {
-        switch rotation {
-        case ._0:   return background
-        case ._90:  return background.oriented(.right)  // pure 90° rotation, no mirror
-        case ._180: return background.oriented(.down)   // pure 180°, no mirror
-        case ._270: return background.oriented(.left)   // pure 270°, no mirror
-        @unknown default: return background
-        }
+     private func applyRotationToBackground(_ background: CIImage,
+                                            rotation: RTCVideoRotation) -> CIImage {
+        #if os(macOS)
+         return background.oriented(.upMirrored)
+        #elseif os(iOS)
+         switch rotation {
+         case ._0:
+             return background
+         case ._90:
+             return background.oriented(.left)   // 90° CW, no mirror
+         case ._180:
+             return background.oriented(.down)   // 180°, no mirror
+         case ._270:
+             return background.oriented(.right)  // 90° CCW, no mirror
+         @unknown default:
+             return background
+         }
+        #endif
+         
     }
+//    private func applyRotationToBackground(_ background: CIImage, rotation: RTCVideoRotation) -> CIImage {
+//        switch rotation {
+//        case ._0:   return background
+//        case ._90:  return background.oriented(.right)  // pure 90° rotation, no mirror
+//        case ._180: return background.oriented(.down)   // pure 180°, no mirror
+//        case ._270: return background.oriented(.left)   // pure 270°, no mirror
+//        @unknown default: return background
+//        }
+//    }
     
     private func createBlurredImage(from image: CIImage, radius: Float) -> CIImage? {
         guard let filter = gaussianBlurFilter else { return nil }
