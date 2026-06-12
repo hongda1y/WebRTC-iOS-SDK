@@ -82,9 +82,24 @@ iOS SDK
 * After everything has finished. Run the following command to have xcframework in out directory
 
   ```   
-  xcodebuild -create-xcframework -framework out/ios_simulator_universal/WebRTC.framework \
+  xcodebuild -create-xcframework \
+   -framework out/ios_simulator_universal/WebRTC.framework \
+   -debug-symbols "$(pwd)/out/ios_simulator_universal/WebRTC.framework.dSYM" \
    -framework out/ios_arm64/WebRTC.framework \
+   -debug-symbols "$(pwd)/out/ios_arm64/WebRTC.framework.dSYM" \
    -output out/WebRTC.xcframework
   ```
+
+* If the dSYM bundles are not generated next to the frameworks, create them before
+  packaging:
+
+  ```
+  dsymutil out/ios_arm64/WebRTC.framework/WebRTC -o out/ios_arm64/WebRTC.framework.dSYM
+  dsymutil out/ios_simulator_universal/WebRTC.framework/WebRTC -o out/ios_simulator_universal/WebRTC.framework.dSYM
+  ```
+
+  Keep the original build dSYMs when possible. Recreating dSYMs from a stripped
+  binary can satisfy UUID checks, but it does not restore full debug information
+  for crash symbolication.
 
 * The new WebRTC.xcframework is available under `out` directory
