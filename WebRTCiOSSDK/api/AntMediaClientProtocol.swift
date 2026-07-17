@@ -30,19 +30,37 @@ let STREAM_INFORMATION_COMMAND = "streamInformation";
 let FORCE_STREAM_QUALITY_INFO = "forceStreamQuality";
 let STREAM_HEIGHT_FIELD = "streamHeight";
 public let EVENT_TYPE = "eventType";
-let EVENT_TYPE_MIC_MUTED = "MIC_MUTED"
-let EVENT_TYPE_MIC_UNMUTED = "MIC_UNMUTED";
-let EVENT_TYPE_CAM_TURNED_OFF = "CAM_TURNED_OFF";
-let EVENT_TYPE_CAM_TURNED_ON = "CAM_TURNED_ON";
+
+public let EVENT_TYPE_MIC_MUTED = "MIC_MUTED"
+public let EVENT_TYPE_MIC_UNMUTED = "MIC_UNMUTED";
+
+public let EVENT_TURN_YOUR_MIC_OFF = "TURN_YOUR_MIC_OFF"
+public let EVENT_TURN_YOUR_MIC_ON = "TURN_YOUR_MIC_ON"
+
+public let EVENT_TYPE_CAM_TURNED_OFF = "CAM_TURNED_OFF";
+public let EVENT_TYPE_CAM_TURNED_ON = "CAM_TURNED_ON";
+
 let GET_BROADCAST_OBJECT_COMMAND = "getBroadcastObject"
 let BROADCAST_OBJECT_NOTIFICATION = "broadcastObject"
+let GET_SUBTRACKS_COMMAND = "getSubtracks"
+let SUBTRACK_LIST_NOTIFICATION = "subtrackList"
+let SUBTRACK_ADDED_NOTIFICATION = "subtrackAdded"
+let SUBTRACK_REMOVED_NOTIFICATION = "subtrackRemoved"
 public let RESOLUTION_CHANGE_INFO_COMMAND = "resolutionChangeInfo"
 public let EVENT_TYPE_TRACK_LIST_UPDATED = "TRACK_LIST_UPDATED"
 public let EVENT_TYPE_VIDEO_TRACK_ASSIGNMENT_LIST = "VIDEO_TRACK_ASSIGNMENT_LIST";
 
+let ASSIGN_VIDEO_TRACK = "assignVideoTrackCommand"
+let GET_VIDEO_TRACK_ASSIGNMENT = "getVideoTrackAssignmentsCommand"
+
 let ENABLE_TRACK_COMMAND = "enableTrack"
 let ENABLE_VIDEO_TRACK_COMMAND = "toggleVideo"
 let ENABLE_AUDIO_TRACK_COMMAND = "toggleAudio"
+
+let EVENT_TYPE_SCREENCAST_OFF = "SCREENCAST_OFF";
+let EVENT_TYPE_SCREENCAST_ON = "SCREENCAST_ON";
+
+let REQUEST_P2P_METADATA = "requestP2PMetadata"
 
 public protocol AntMediaClientProtocol {
         
@@ -385,6 +403,12 @@ public protocol AntMediaClientProtocol {
      Get the broadcast object from the server. After the broadcast object has been received, it calls AntMediaClientDelegat:onLoadBroadcastObject method
      */
     func getBroadcastObject(forStreamId id: String)
+
+    /**
+     Get the paginated subtrack list for a main track (room). Response arrives via
+     AntMediaClientDelegate.onSubtrackList. Pass nil for role to get all subtracks.
+     */
+    func getSubtracks(roomId: String, role: String?, offset: Int, size: Int)
     
     /**
      Register for Audio Level Extraction to get the audioLevel from the microphone. It's good to use to detect if user is speaking when he muted himself.

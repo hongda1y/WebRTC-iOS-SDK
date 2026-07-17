@@ -35,22 +35,40 @@ open class ConferenceViewController: UIViewController ,  AVCaptureVideoDataOutpu
         return String((0..<length).map{ _ in characters.randomElement()! })
     }
     
-
+    var isFirst: Bool = true
     
     open override func viewWillAppear(_ animated: Bool)
     {
         
+        localView.backgroundColor = .black
+        
         collectionView.dataSource = self
         collectionView.delegate = self
         
-        AntMediaClient.setDebug(true)
-        self.conferenceClient =  AntMediaClient.init();
+//        AntMediaClient.setDebug(true)
+        self.conferenceClient = AntMediaClient()
+        self.conferenceClient?.setRTCFile(name: "VideoSample.mp4")
         self.conferenceClient?.delegate = self
         self.conferenceClient?.setWebSocketServerUrl(url: self.clientUrl)
         self.conferenceClient?.setLocalView(container: self.localView)
+        //        self.conferenceClient?.setUsernameInfo(userId: 1, username: "Socheat", profilePicture: "test profile")
+        
+        self.conferenceClient?.setMetaData([
+            "userId": 1,
+            "username": "Socheat",
+            "profilePicture": "https://images.unsplash.com/photo-1511367461989-f85a21fda167?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cHJvZmlsZXxlbnwwfHwwfHx8MA%3D%3D"
+        ])
         
         //this publishes stream to the room
         self.publisherStreamId = generateRandomAlphanumericString(length: 10);
+        
+#if targetEnvironment(simulator)
+        //        conferenceClient?.setVideoEnable(enable: true)
+#else
+        conferenceClient?.setVideoEnable(enable: true)
+#endif
+        
+        self.conferenceClient?.setTargetResolution(width: 854, height: 480)
         self.conferenceClient?.publish(streamId: self.publisherStreamId, token: "", mainTrackId: roomId);
         
         //this plays the streams in the room
@@ -81,8 +99,8 @@ open class ConferenceViewController: UIViewController ,  AVCaptureVideoDataOutpu
 }
 
 
-extension ConferenceViewController: AntMediaClientDelegate
-{
+extension ConferenceViewController: AntMediaClientDelegate {
+    
     public func clientHasError(_ message: String) {
         
     }
@@ -93,19 +111,26 @@ extension ConferenceViewController: AntMediaClientDelegate
     }
     
     public func clientDidDisconnect(_ message: String) {
-        removePlayers();
+        removePlayers()
     }
     public func playStarted(streamId: String) {
-        print("play started");
-        AntMediaClient.speakerOn();
+        print("play started")
+        AntMediaClient.speakerOn()
+        
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+//            self.conferenceClient?.setMaxTrackCount(3)
+//        }
+        
+//        Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { _ in
+//            self.conferenceClient?.setMaxTrackCount(2)
+//        }
     }
     
     public func trackAdded(track: RTCMediaStreamTrack, stream: [RTCMediaStream]) {
-                
-        AntMediaClient.printf("Track is added with id:\(track.trackId)")
-        if let videoTrack = track as? RTCVideoTrack
-        {
-            remoteViewTrackMap.append(videoTrack);
+        
+        print("Track is added with id:\(track.trackId), streamID: \(stream.first?.streamId) ")
+        if let videoTrack = track as? RTCVideoTrack {
+            remoteViewTrackMap.append(videoTrack)
             Run.onMainThread {
                 self.collectionView.reloadData()
             }
@@ -115,28 +140,25 @@ extension ConferenceViewController: AntMediaClientDelegate
     public func trackRemoved(track: RTCMediaStreamTrack) {
         
         Run.onMainThread { [self] in
-            var i = 0;
+            var i = 0
             
-            while (i < remoteViewTrackMap.count)
-            {
-                if (remoteViewTrackMap[i]?.trackId == track.trackId)
-                {
+            while (i < remoteViewTrackMap.count) {
+                if (remoteViewTrackMap[i]?.trackId == track.trackId) {
                     remoteViewTrackMap.remove(at: i)
-                    collectionView.reloadData();
-                    break;
+                    collectionView.reloadData()
+                    break
                 }
                 i += 1
             }
         }
-        
     }
     
     public func playFinished(streamId: String) {
-        removePlayers();
+        removePlayers()
     }
     
     public func publishStarted(streamId: String) {
-        AntMediaClient.printf("Publish started for stream:\(streamId)")
+        print("Publish started for stream:\(streamId)")
                 
         //this plays the streams in the room
         self.conferenceClient?.play(streamId: self.roomId);
@@ -146,11 +168,11 @@ extension ConferenceViewController: AntMediaClientDelegate
     }
     
     public func publishFinished(streamId: String) {
-        AntMediaClient.printf("Publish finished for stream:\(streamId)")
+        print("Publish finished for stream:\(streamId)")
     }
     
     public func videoView(_ videoView: RTCVideoRenderer, didChangeVideoSize size: CGSize) {
-        AntMediaClient.printf("Video size changed to " + String(Int(size.width)) + "x" + String(Int(size.height)) + ". These changes are not handled in Simulator for now")
+        print("Video size changed to " + String(Int(size.width)) + "x" + String(Int(size.height)) + ". These changes are not handled in Simulator for now")
     }
     
     public func onLoadBroadcastObject(streamId: String, message: [String : Any]) {

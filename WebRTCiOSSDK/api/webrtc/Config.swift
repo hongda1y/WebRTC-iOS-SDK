@@ -36,8 +36,22 @@ public class Config: NSObject {
         return RTCMediaConstraints.init(mandatoryConstraints: constraints, optionalConstraints: defaultConstraints)
     }
     
+    static func createAudioVideoConstraintsForRestart() -> RTCMediaConstraints {
+        RTCMediaConstraints(
+            mandatoryConstraints: [
+                "IceRestart": "true"
+            ],
+            optionalConstraints: nil
+        )
+    }
+    
     static func createDefaultConstraint() -> RTCMediaConstraints {
-        return RTCMediaConstraints.init(mandatoryConstraints: nil, optionalConstraints: defaultConstraints)
+        let hdConstraints = [
+            "maxWidth":  "1920",
+            "maxHeight": "1080",
+            "maxFrameRate": "30"
+        ]
+        return RTCMediaConstraints.init(mandatoryConstraints: hdConstraints, optionalConstraints: defaultConstraints)
     }
     
     static func createTestConstraints() -> RTCMediaConstraints {
@@ -45,24 +59,38 @@ public class Config: NSObject {
     }
     
     static func createConfiguration(server: RTCIceServer) -> RTCConfiguration {
+        
         let config = RTCConfiguration.init()
-        config.iceServers = [server]
-        config.sdpSemantics = rtcSdpSemantics;
-        return Self.createAntMediaConfiguration()
+        let turnServer = AntMediaTurnServerConfig.shared.iceServer()
+        config.iceServers = [server,turnServer]
+        config.sdpSemantics = rtcSdpSemantics
+
+        logIceServers([server,turnServer])
+        
+        return config
+        
     }
 
-    public static func createAntMediaConfiguration() -> RTCConfiguration {
-        let stunServer = RTCIceServer(
-            urlStrings: ["stun:202.124.37.91:3478"]
-        )
-        let turnServer = RTCIceServer(
-            urlStrings: ["turn:202.124.37.91:3478"],
-            username: "antmedia",
-            credential: "GBS@2015"
-        )
-        let config = RTCConfiguration()
-        config.iceServers = [stunServer, turnServer]
-        config.sdpSemantics = rtcSdpSemantics
-        return config
+    private static func logIceServers(_ servers: [RTCIceServer]) {
+        print(#function,"🧊 ICE Configuration:")
+    
+        for (index, server) in servers.enumerated() {
+            print(#function,"---- Server \(index + 1) ----")
+            
+            for url in server.urlStrings {
+                print(#function,"URL: \(url)")
+            }
+            
+            if server.username?.isEmpty == true {
+                print(#function,"Auth: ❌ No Username")
+            } else {
+                print(#function,"Auth: ✅ Username = \(server.username)")
+            }
+            
+            print(#function,"Credential: \(server.credential?.isEmpty == true ? "❌ Empty" : "✅ Set")")
+        }
+        
+        print(#function,"🧊 End ICE Configuration\n")
     }
+
 }

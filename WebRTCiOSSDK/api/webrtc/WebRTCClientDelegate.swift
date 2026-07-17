@@ -8,7 +8,7 @@
 import Foundation
 import WebRTC
 
-internal protocol WebRTCClientDelegate {
+internal protocol WebRTCClientDelegate: AnyObject {
     
     func sendMessage(_ message: [String: Any])
     
@@ -34,7 +34,11 @@ internal protocol WebRTCClientDelegate {
     
     func addLocalStream(streamId:String)
     
+    func onLocalTrackUpdate(track: RTCVideoTrack)
+    
     func connectionStateChanged(newState: RTCIceConnectionState, streamId:String);
     
     func dataReceivedFromDataChannel(didReceiveData data: RTCDataBuffer, streamId:String);
+    
+    func rtcDataChannelDidChangeState(_ state: RTCDataChannelState)
 }

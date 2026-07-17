@@ -86,7 +86,7 @@ class SampleHandler: RPBroadcastSampleHandler, AntMediaClientDelegate {
                     
             self.client.setExternalAudio(externalAudioEnabled: true)
                         
-            self.client.publish(streamId: streamId as! String);
+            self.client.publish(streamId: streamId as! String, mainTrackId: "5efa9f2cd9d249749609bdf97235cc80");
             
         }
         
