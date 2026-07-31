@@ -884,10 +884,14 @@ class WebRTCClient: NSObject {
         // Honor any pre-existing bitrate cap the caller already configured.
         streamer.bitrateCeilingBps = maxVideoBpsCeiling?.intValue
 
-        streamer.onProfileChange = { [weak self] profile in
-            self?.printf("Adaptive profile → \(profile.name) "
-                         + "(\(profile.maxBitrateBps/1000)kbps @ \(profile.maxFramerate)fps, "
-                         + "scale \(profile.scaleResolutionDownBy)x)")
+        streamer.onProfileChange = { [weak self] profile, stats in
+            guard let self = self else { return }
+            self.printf("Adaptive profile → \(profile.name) "
+                        + "(\(profile.maxBitrateBps/1000)kbps @ \(profile.maxFramerate)fps, "
+                        + "scale \(profile.scaleResolutionDownBy)x)")
+            self.delegate?.videoStreamingProfileChanged(profile: profile,
+                                                        stats: stats,
+                                                        streamId: self.streamId ?? "")
         }
 
         streamer.start()

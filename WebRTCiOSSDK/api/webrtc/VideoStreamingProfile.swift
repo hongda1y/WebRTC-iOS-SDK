@@ -46,12 +46,12 @@ enum StreamContentType {
 
 // MARK: - Profile
 
-struct VideoStreamingProfile: Equatable {
+public struct VideoStreamingProfile: Equatable {
 
-    let name: String
-    let maxBitrateBps: Int
-    let maxFramerate: Int
-    let scaleResolutionDownBy: Double
+    public let name: String
+    public let maxBitrateBps: Int
+    public let maxFramerate: Int
+    public let scaleResolutionDownBy: Double
 
     // -------- Camera ladder (talking heads) --------
     static let cameraExcellent = VideoStreamingProfile(name: "camera-excellent",
@@ -137,6 +137,20 @@ struct VideoStreamingProfile: Equatable {
     }
 }
 
+// MARK: - Live stats snapshot
+
+/// Last measured encoder output, reported alongside a profile change.
+/// All values are zero until the first stats poll completes.
+public struct VideoStreamingStats: Equatable {
+    public let frameWidth: Int
+    public let frameHeight: Int
+    public let framesPerSecond: Double
+    public let measuredBitrateBps: Int
+
+    static let zero = VideoStreamingStats(frameWidth: 0, frameHeight: 0,
+                                          framesPerSecond: 0, measuredBitrateBps: 0)
+}
+
 // MARK: - Quality classification
 
 private enum NetworkQualityClass: Int, Comparable {
@@ -187,9 +201,10 @@ final class AdaptiveVideoStreamer {
         }
     }
 
-    var onProfileChange: ((VideoStreamingProfile) -> Void)?
+    var onProfileChange: ((VideoStreamingProfile, VideoStreamingStats) -> Void)?
 
     private(set) var currentProfile: VideoStreamingProfile
+    private var lastStats: VideoStreamingStats = .zero
 
     // MARK: Private state
 
@@ -428,6 +443,11 @@ final class AdaptiveVideoStreamer {
             ? Double(lostDelta) / Double(sentDelta + lostDelta)
             : 0
 
+        lastStats = VideoStreamingStats(frameWidth: frameWidth,
+                                        frameHeight: frameHeight,
+                                        framesPerSecond: framesPerSecond,
+                                        measuredBitrateBps: Int(max(0, measuredBitrate)))
+
         // Diagnostic per-poll summary.
         let abrKbps = (availableOutgoingBitrate ?? 0) / 1000
         let actualKbps = measuredBitrate / 1000
@@ -627,8 +647,8 @@ final class AdaptiveVideoStreamer {
 
 //        print("[AdaptiveStreamer] → \(profile.name)  bitrate=\(effectiveBitrate/1000)kbps fps=\(effectiveFps) scale=\(effectiveScale)x  reason=\(reason) tier=\(deviceTier) thermal=\(thermalState.rawValue) lowPower=\(isLowPowerMode) content=\(contentType)")
         currentProfile = profile
-        DispatchQueue.main.async { [profile, callback = onProfileChange] in
-            callback?(profile)
+        DispatchQueue.main.async { [profile, stats = lastStats, callback = onProfileChange] in
+            callback?(profile, stats)
         }
     }
 }

@@ -1010,7 +1010,13 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                         //clean the connection
                         webRTCClientMap.removeValue(forKey: streamId)?.disconnect()
                         printf("Reconnecting to publish the stream:\(streamId)")
-                        publish(streamId:streamId)
+                    
+                        stop(streamId: streamId)
+                    
+                        dispatchQueue.asyncAfter(deadline: .now() + 3 ) { [weak self] in
+                            self?.publish(streamId:streamId)
+                        }
+                        
                     } else {
                         printf("Not trying to reconnect to publish the stream:\(streamId) because ice connection state is not disconnected")
                     }
@@ -1031,7 +1037,12 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                     //clean the connection
                     self.webRTCClientMap.removeValue(forKey: streamId)?.disconnect()
                     printf("Reconnecting to play the stream:\(streamId)");
-                    self.play(streamId:streamId)
+//
+                    stop(streamId: streamId)
+                    
+                    dispatchQueue.asyncAfter(deadline: .now() + 3 ) { [weak self] in
+                        self?.play(streamId:streamId)
+                    }
                 }
                 else {
                     printf("Not trying to reconnect to play the stream:\(streamId) because ice connection state is not disconnected");
@@ -1668,6 +1679,10 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
 extension AntMediaClient: WebRTCClientDelegate {
     func onLocalTrackUpdate(track: RTCVideoTrack) {
         delegate?.localStreamUpdate(track: track)
+    }
+
+    func videoStreamingProfileChanged(profile: VideoStreamingProfile, stats: VideoStreamingStats, streamId: String) {
+        delegate?.onVideoStreamingProfileChange(profile, stats: stats, streamId: streamId)
     }
     
     func rtcDataChannelDidChangeState(_ state: RTCDataChannelState) {

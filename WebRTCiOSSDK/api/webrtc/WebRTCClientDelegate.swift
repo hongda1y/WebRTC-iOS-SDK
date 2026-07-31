@@ -41,4 +41,6 @@ internal protocol WebRTCClientDelegate: AnyObject {
     func dataReceivedFromDataChannel(didReceiveData data: RTCDataBuffer, streamId:String);
     
     func rtcDataChannelDidChangeState(_ state: RTCDataChannelState)
+
+    func videoStreamingProfileChanged(profile: VideoStreamingProfile, stats: VideoStreamingStats, streamId: String)
 }

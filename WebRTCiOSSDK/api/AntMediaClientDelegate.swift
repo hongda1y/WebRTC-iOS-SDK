@@ -35,6 +35,12 @@ public protocol AntMediaClientDelegate: AnyObject {
     
     func onCameraPositionChange(_ position: AVCaptureDevice.Position)
 
+    /**
+     Called when the adaptive streamer switches the outgoing video profile.
+     `stats` carries the last measured resolution / fps / bitrate. Debug info.
+     */
+    func onVideoStreamingProfileChange(_ profile: VideoStreamingProfile, stats: VideoStreamingStats, streamId: String)
+
     func onGetTrackList(_ tracks: [String])
     
     /**
@@ -217,7 +223,9 @@ public extension AntMediaClientDelegate {
     func connectionStateChange(newState: RTCIceConnectionState, for streamID: String) {}
     
     func onCameraPositionChange(_ position: AVCaptureDevice.Position) {}
-    
+
+    func onVideoStreamingProfileChange(_ profile: VideoStreamingProfile, stats: VideoStreamingStats, streamId: String) {}
+
     func clientError(_ error: AntMediaError) {}
     
     func onGetTrackList(_ tracks: [String]) {
